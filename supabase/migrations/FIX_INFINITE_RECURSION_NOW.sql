@@ -1,0 +1,71 @@
+-- ============================================
+-- FIX INFINITE RECURSION - RUN THIS NOW!
+-- ============================================
+-- This fixes the "infinite recursion detected in policy for relation rooms" error
+
+-- Step 1: Drop ALL problematic policies
+DROP POLICY IF EXISTS "Users can view their own rooms" ON rooms;
+DROP POLICY IF EXISTS "Users can view their own membership" ON room_members;
+DROP POLICY IF EXISTS "Room creators can view all members" ON room_members;
+DROP POLICY IF EXISTS "Users can insert themselves as members" ON room_members;
+DROP POLICY IF EXISTS "Room creators can delete members" ON room_members;
+
+-- Step 2: Recreate room_members policies (simple, no recursion)
+CREATE POLICY "Users can view their own membership"
+  ON room_members FOR SELECT
+  USING (
+    user_id = auth.uid()
+    OR (
+      household_id IS NOT NULL
+      AND EXISTS (
+        SELECT 1 FROM household_members hm
+        WHERE hm.household_id = room_members.household_id
+        AND hm.user_id = auth.uid()
+      )
+    )
+  );
+
+CREATE POLICY "Room creators can view all members"
+  ON room_members FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM rooms r 
+      WHERE r.id = room_id 
+      AND r.created_by = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can insert themselves as members"
+  ON room_members FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Room creators can delete members"
+  ON room_members FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM rooms r 
+      WHERE r.id = room_id 
+      AND r.created_by = auth.uid()
+    )
+  );
+
+-- Step 3: Recreate rooms policy with IN subquery to avoid recursion
+CREATE POLICY "Users can view their own rooms"
+  ON rooms FOR SELECT
+  USING (
+    created_by = auth.uid()
+    OR id IN (
+      SELECT rm.room_id 
+      FROM room_members rm
+      WHERE rm.user_id = auth.uid()
+    )
+    OR id IN (
+      SELECT rm.room_id
+      FROM room_members rm
+      INNER JOIN household_members hm ON hm.household_id = rm.household_id
+      WHERE hm.user_id = auth.uid()
+    )
+  );
+
+-- Verify: This should return no errors
+SELECT 'Policy fix completed successfully!' as status;

@@ -1,0 +1,272 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { useRoom } from '@/contexts/RoomContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+}
+
+interface Transaction {
+  id: string;
+  date: string;
+  amount: number;
+  note: string;
+  category_id: string;
+  paid_by: string;
+  room_id: string;
+  created_by: string;
+}
+
+export default function EditTransactionPage() {
+  const router = useRouter();
+  const params = useParams();
+  const transactionId = params.id as string;
+  const supabase = createClient();
+  const { currentRoom } = useRoom();
+
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
+
+  // Form state
+  const [date, setDate] = useState('');
+  const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+
+  useEffect(() => {
+    loadData();
+  }, [transactionId]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      setCurrentUserId(user.id);
+
+      // Load transaction
+      const { data: transactionData, error: transactionError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('id', transactionId)
+        .single();
+
+      if (transactionError) throw transactionError;
+
+      // Check if user owns this transaction
+      if (transactionData.created_by !== user.id) {
+        toast.error('❌ Bạn không có quyền sửa giao dịch này');
+        router.push('/transactions');
+        return;
+      }
+
+      setTransaction(transactionData);
+      setDate(transactionData.date);
+      setAmount(transactionData.amount.toString());
+      setNote(transactionData.note);
+      setCategoryId(transactionData.category_id);
+
+      // Load categories
+      const { data: categoriesData } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      setCategories(categoriesData || []);
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast.error('❌ Không thể tải giao dịch');
+      router.push('/transactions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!date || !amount || !note || !categoryId) {
+      toast.error('❌ Vui lòng điền đầy đủ thông tin');
+      return;
+    }
+
+    if (!transaction) return;
+
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .update({
+          date,
+          amount: parseFloat(amount),
+          note: note.trim(),
+          category_id: categoryId,
+        })
+        .eq('id', transactionId);
+
+      if (error) throw error;
+
+      toast.success('✅ Đã cập nhật giao dịch!');
+      router.push('/transactions');
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast.error('❌ Lỗi: ' + error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!transaction) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-600">Không tìm thấy giao dịch</p>
+        <Button onClick={() => router.push('/transactions')} className="mt-4">
+          Quay lại
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Header */}
+      <div>
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="mb-4"
+        >
+          ← Quay lại
+        </Button>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+          Sửa giao dịch
+        </h1>
+        <p className="text-gray-600 mt-1">
+          Cập nhật thông tin giao dịch
+        </p>
+      </div>
+
+      {/* Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Thông tin giao dịch</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+            {/* Date */}
+            <div className="space-y-2">
+              <Label htmlFor="date">Ngày</Label>
+              <Input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Amount */}
+            <div className="space-y-2">
+              <Label htmlFor="amount">Số tiền (VNĐ)</Label>
+              <Input
+                id="amount"
+                type="number"
+                placeholder="100000"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Category */}
+            <div className="space-y-2">
+              <Label>Danh mục</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => setCategoryId(category.id)}
+                    className={`p-4 border-2 rounded-lg transition flex flex-col items-center gap-2 ${
+                      categoryId === category.id
+                        ? 'border-green-600 bg-green-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="text-3xl">{category.icon}</span>
+                    <span className="text-sm font-medium">{category.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Note */}
+            <div className="space-y-2">
+              <Label htmlFor="note">Ghi chú</Label>
+              <Textarea
+                id="note"
+                placeholder="Ví dụ: Tiền điện tháng 12"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={3}
+                required
+                maxLength={200}
+              />
+              <p className="text-xs text-gray-500">
+                {note.length}/200 ký tự
+              </p>
+            </div>
+
+            {/* Submit */}
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                className="flex-1"
+              >
+                Hủy
+              </Button>
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="flex-1"
+              >
+                {submitting ? 'Đang lưu...' : '💾 Lưu thay đổi'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

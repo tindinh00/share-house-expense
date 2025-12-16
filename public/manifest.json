@@ -1,0 +1,11 @@
+{
+  "name": "Chi tiêu nhà chung",
+  "short_name": "Chi tiêu",
+  "description": "Quản lý chi tiêu cho nhà ở ghép",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "orientation": "portrait",
+  "icons": []
+}

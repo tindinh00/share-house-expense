@@ -1,0 +1,68 @@
+# PWA Icons Placeholder
+
+Bạn cần tạo 2 icons cho PWA:
+
+## Required Icons
+
+1. **icon-192.png** (192x192px)
+2. **icon-512.png** (512x512px)
+
+## Cách tạo nhanh
+
+### Option 1: Online Tool (Khuyên dùng)
+
+1. Vào https://realfavicongenerator.net/
+2. Upload logo/icon của bạn
+3. Generate → Download
+4. Copy `icon-192.png` và `icon-512.png` vào folder `public/`
+
+### Option 2: Figma/Canva
+
+1. Tạo design 512x512px
+2. Icon đơn giản: 🏠 + Text "Chi tiêu"
+3. Background: Gradient blue (#3b82f6 → #1e40af)
+4. Export PNG 512x512
+5. Resize xuống 192x192 (dùng https://squoosh.app/)
+
+### Option 3: Emoji as Icon (Tạm thời)
+
+1. Vào https://favicon.io/emoji-favicons/
+2. Chọn emoji 🏠
+3. Generate → Download
+4. Rename thành `icon-192.png` và `icon-512.png`
+
+## Design Guidelines
+
+- **Simple**: Icon phải rõ ràng ở size nhỏ
+- **Contrast**: Đủ tương phản để nhìn rõ trên mọi background
+- **Padding**: Để margin ~10% xung quanh để tránh bị crop
+- **Format**: PNG với transparent background (hoặc solid color)
+
+## Temporary Solution
+
+Nếu chưa có icon, có thể tạm thời comment out trong `manifest.json`:
+
+```json
+{
+  "name": "Chi tiêu nhà chung",
+  "short_name": "Chi tiêu",
+  // "icons": [ ... ]  ← Comment out tạm thời
+}
+```
+
+App vẫn chạy được, chỉ không có icon đẹp khi add to home screen.
+
+## Recommended Design
+
+```
+┌─────────────────┐
+│                 │
+│      🏠         │  ← Emoji house
+│   Chi tiêu     │  ← Text
+│                 │
+└─────────────────┘
+Background: Blue gradient
+Text: White, bold
+```
+
+Hoặc đơn giản hơn: Chỉ emoji 🏠 to to, background xanh.
