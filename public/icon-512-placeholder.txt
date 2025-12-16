@@ -1,0 +1,17 @@
+Cần tạo icon 512x512px cho PWA
+
+Gợi ý design:
+- Background: Xanh lá #10b981
+- Icon: 🏠 hoặc 💰
+- Text: "SHE" (Share House Expense)
+- Style: Flat, modern, minimal
+
+Tools để tạo:
+1. Canva: https://www.canva.com/
+2. Figma: https://www.figma.com/
+3. Online generator: https://realfavicongenerator.net/
+
+Sau khi tạo xong:
+- Save as: icon-512.png
+- Copy vào folder: public/
+- Xóa file này
