@@ -32,7 +32,7 @@ export default function RoomsPage() {
   const loadRoomsWithMembers = async () => {
     setLoading(true);
     try {
-      const roomsData = await Promise.all(
+      const roomsData: RoomWithMembers[] = await Promise.all(
         rooms.map(async (room) => {
           const { count } = await supabase
             .from('room_members')
@@ -40,7 +40,11 @@ export default function RoomsPage() {
             .eq('room_id', room.id);
 
           return {
-            ...room,
+            id: room.id,
+            name: room.name,
+            type: room.type,
+            split_by: room.split_by,
+            created_at: room.created_at,
             member_count: count || 0,
           };
         })

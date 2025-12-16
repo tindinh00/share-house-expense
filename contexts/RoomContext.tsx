@@ -8,6 +8,7 @@ interface Room {
   name: string;
   type: 'SHARED' | 'PRIVATE';
   split_by: 'USER' | 'HOUSEHOLD';
+  created_at: string;
 }
 
 interface RoomContextType {
