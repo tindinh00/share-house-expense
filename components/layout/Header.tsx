@@ -33,17 +33,17 @@ export default function Header({ user, profile, onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-gradient-to-r from-green-600 to-green-500 shadow-md sticky top-0 z-50">
       <div className="px-4 md:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Hamburger Menu Button (Desktop) */}
+          {/* Hamburger Menu Button (Mobile & Desktop) */}
           <button
             onClick={onMenuClick}
-            className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition mr-2"
+            className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white/20 transition mr-2"
             aria-label="Toggle menu"
           >
             <svg
-              className="w-6 h-6 text-gray-600"
+              className="w-6 h-6 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -59,7 +59,7 @@ export default function Header({ user, profile, onMenuClick }: HeaderProps) {
 
           {/* Logo & Room Selector */}
           <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
+            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-white truncate">
               🏠 <span className="hidden sm:inline">Chi tiêu nhà chung</span>
             </h1>
             
@@ -67,9 +67,9 @@ export default function Header({ user, profile, onMenuClick }: HeaderProps) {
             <div className="relative hidden sm:block">
               <button
                 onClick={() => setShowRoomMenu(!showRoomMenu)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition backdrop-blur-sm"
               >
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-white">
                   {currentRoom ? (
                     <>
                       {currentRoom.type === 'PRIVATE' ? '💼' : '🏠'} {currentRoom.name}
@@ -79,7 +79,7 @@ export default function Header({ user, profile, onMenuClick }: HeaderProps) {
                   )}
                 </span>
                 <svg
-                  className={`w-4 h-4 text-gray-500 transition-transform ${
+                  className={`w-4 h-4 text-white transition-transform ${
                     showRoomMenu ? 'rotate-180' : ''
                   }`}
                   fill="none"
@@ -158,19 +158,19 @@ export default function Header({ user, profile, onMenuClick }: HeaderProps) {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/20 transition"
             >
-              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-medium">
+              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-green-600 font-medium">
                 {profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-white">
                   {profile?.username || 'User'}
                 </p>
-                <p className="text-xs text-gray-500">{user.email}</p>
+                <p className="text-xs text-green-100">{user.email}</p>
               </div>
               <svg
-                className={`w-4 h-4 text-gray-500 transition-transform ${
+                className={`w-4 h-4 text-white transition-transform ${
                   showUserMenu ? 'rotate-180' : ''
                 }`}
                 fill="none"

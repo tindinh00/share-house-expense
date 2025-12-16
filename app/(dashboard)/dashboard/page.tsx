@@ -165,19 +165,15 @@ export default function DashboardPage() {
     <>
       {showLoginToast && <LoginToast username={username} />}
       
-      <div className="space-y-6">
-        {/* Welcome Section */}
-        <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-            Xin chào, {username}! 👋
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
-            {currentRoom ? (
-              <>Tổng quan chi tiêu của <span className="font-medium text-green-600">{currentRoom.name}</span></>
-            ) : (
-              'Chọn một không gian để xem thống kê'
-            )}
-          </p>
+      {/* Green Background Section with Curve - 1/3 screen */}
+      <div className="absolute top-0 left-0 right-0 h-[33vh] bg-green-600 overflow-hidden">
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gray-50 rounded-t-[40px] -mb-4"></div>
+      </div>
+      
+      <div className="relative space-y-4 pb-20 md:pb-6">
+        {/* Welcome Text */}
+        <div className="text-white mb-20">
+          <h1 className="text-2xl font-bold">Chào {username}!</h1>
         </div>
 
         {!currentRoom ? (
@@ -197,93 +193,64 @@ export default function DashboardPage() {
           </Card>
         ) : (
           <>
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="pt-6">
+            {/* Balance Card with Leaf Icon - Positioned at curve */}
+            <div className="relative -mt-16">
+              <Card className="shadow-lg">
+                <CardContent className="py-4">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Chi tiêu tháng này</p>
-                      <p className="text-2xl font-bold mt-1">{formatCurrency(stats.monthlyTotal)}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                        <span className="text-2xl">🌿</span>
+                      </div>
+                      <p className="text-sm text-gray-600 font-medium">Tổng chi tiêu</p>
                     </div>
-                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                      <span className="text-2xl">💰</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Số giao dịch</p>
-                      <p className="text-2xl font-bold mt-1">{stats.transactionCount}</p>
-                    </div>
-                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                      <span className="text-2xl">📊</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Cân đối của bạn</p>
-                      <p className={`text-2xl font-bold mt-1 ${stats.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {stats.balance >= 0 ? '+' : ''}{formatCurrency(stats.balance)}
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-gray-900">
+                        {stats.monthlyTotal.toLocaleString('vi-VN')}₫
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {stats.balance >= 0 ? 'Bạn được trả' : 'Bạn cần trả'}
-                      </p>
-                    </div>
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${stats.balance >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-                      <span className="text-2xl">{stats.balance >= 0 ? '💳' : '💸'}</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base sm:text-lg">Bắt đầu nhanh</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <Link
+                    href="/transactions/add"
+                    className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 border-2 border-dashed rounded-lg hover:border-primary hover:bg-accent transition group"
+                  >
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition flex-shrink-0">
+                      <span className="text-xl sm:text-2xl">➕</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm sm:text-base">Thêm giao dịch</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Ghi lại chi tiêu mới</p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/rooms/create"
+                    className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 border-2 border-dashed rounded-lg hover:border-primary hover:bg-accent transition group"
+                  >
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition flex-shrink-0">
+                      <span className="text-xl sm:text-2xl">🏠</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm sm:text-base">Tạo không gian</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Thêm room mới</p>
+                    </div>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           </>
         )}
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Bắt đầu nhanh</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <Link
-                href="/transactions/add"
-                className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 border-2 border-dashed rounded-lg hover:border-primary hover:bg-accent transition group"
-              >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition flex-shrink-0">
-                  <span className="text-xl sm:text-2xl">➕</span>
-                </div>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm sm:text-base">Thêm giao dịch</p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Ghi lại chi tiêu mới</p>
-                </div>
-              </Link>
-
-              <Link
-                href="/rooms/create"
-                className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 border-2 border-dashed rounded-lg hover:border-primary hover:bg-accent transition group"
-              >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition flex-shrink-0">
-                  <span className="text-xl sm:text-2xl">🏠</span>
-                </div>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm sm:text-base">Tạo không gian</p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Thêm room mới</p>
-                </div>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Recent Transactions */}
         {currentRoom && (
@@ -346,6 +313,8 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         )}
+
+
       </div>
     </>
   );

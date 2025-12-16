@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
 import { useRoom } from '@/contexts/RoomContext';
 import {
   Tooltip,
@@ -49,10 +48,10 @@ export default function Sidebar({ isOpen, onClose, onToggle }: SidebarProps) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      {/* Mobile Menu Button */}
+      {/* Mobile Floating Menu Button */}
       <button
         onClick={onToggle}
-        className="md:hidden fixed bottom-4 right-4 z-50 bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition"
+        className="md:hidden fixed bottom-20 right-4 z-50 bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-all active:scale-95"
         aria-label="Toggle menu"
       >
         <svg
@@ -82,7 +81,7 @@ export default function Sidebar({ isOpen, onClose, onToggle }: SidebarProps) {
       {/* Overlay - Only on mobile when sidebar is open */}
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black bg-opacity-60 z-40 transition-opacity"
+          className="md:hidden fixed inset-0 bg-gray-900/30 backdrop-blur-sm z-40 transition-opacity"
           onClick={onClose}
         />
       )}
@@ -90,7 +89,7 @@ export default function Sidebar({ isOpen, onClose, onToggle }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-16 left-0 bottom-0 bg-white border-r border-gray-200 z-50
+          fixed top-16 left-0 bottom-0 bg-white shadow-lg z-50
           transform transition-all duration-300 ease-in-out
           ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-16'}
         `}
@@ -116,7 +115,7 @@ export default function Sidebar({ isOpen, onClose, onToggle }: SidebarProps) {
                       ${!isOpen ? 'md:justify-center' : ''}
                     `}
                   >
-                    <span className="text-xl flex-shrink-0">{item.icon}</span>
+                    <span className="text-xl shrink-0">{item.icon}</span>
                     <span className={`${!isOpen ? 'md:hidden' : ''}`}>{item.name}</span>
                   </Link>
                 </TooltipTrigger>

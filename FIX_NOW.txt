@@ -1,17 +1,0 @@
-╔════════════════════════════════════════════════════════════════╗
-║                    ⚠️  FIX INFINITE RECURSION                  ║
-╚════════════════════════════════════════════════════════════════╝
-
-Bạn đang gặp lỗi: "infinite recursion detected in policy"
-
-🔧 FIX NGAY (1 phút):
-
-1. Mở Supabase Dashboard → SQL Editor
-2. Copy file: supabase/migrations/FIX_INFINITE_RECURSION_NOW.sql
-3. Paste vào SQL Editor
-4. Click Run ▶️
-5. Refresh trang web
-
-✅ Done! Lỗi sẽ biến mất.
-
-📖 Chi tiết: Xem file QUICK_FIX_RECURSION.md

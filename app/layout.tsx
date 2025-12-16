@@ -8,6 +8,15 @@ export const metadata: Metadata = {
   title: "Chi tiêu nhà chung",
   description: "Quản lý chi tiêu cho nhà ở ghép",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/iconIOS.png", sizes: "192x192", type: "image/png" },
+      { url: "/iconIOS.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/iconIOS.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

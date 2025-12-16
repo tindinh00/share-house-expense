@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import BottomNav from './BottomNav';
 
 interface DashboardShellProps {
   user: User;
@@ -12,16 +13,24 @@ interface DashboardShellProps {
 }
 
 export default function DashboardShell({ user, profile, children }: DashboardShellProps) {
-  // Start with true to match server render
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Start with false on mobile, true on desktop
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   // Load from localStorage after mount to avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
+    
+    // Check if mobile
+    const isMobile = window.innerWidth < 768;
+    
     const saved = localStorage.getItem('sidebarOpen');
     if (saved !== null) {
-      setIsSidebarOpen(saved === 'true');
+      // On mobile, always start closed
+      setIsSidebarOpen(isMobile ? false : saved === 'true');
+    } else {
+      // Default: closed on mobile, open on desktop
+      setIsSidebarOpen(!isMobile);
     }
   }, []);
 
@@ -46,12 +55,14 @@ export default function DashboardShell({ user, profile, children }: DashboardShe
           onToggle={() => toggleSidebar(!isSidebarOpen)}
         />
         
-        <main className={`flex-1 p-4 md:p-6 lg:p-8 transition-all duration-300 ${isSidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
+        <main className={`flex-1 p-4 md:p-6 lg:p-8 transition-all duration-300 bg-transparent ${isSidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
         </main>
       </div>
+      
+      <BottomNav />
     </>
   );
 }

@@ -11,6 +11,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
@@ -422,14 +429,14 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 pb-20 md:pb-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
             Báo cáo chi tiêu
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm md:text-base text-gray-600 mt-1">
             Không gian: {currentRoom.name}
           </p>
         </div>
@@ -437,7 +444,7 @@ export default function ReportsPage() {
         {/* Date Range Picker */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline">
+            <Button variant="outline" className="text-xs md:text-sm w-full md:w-auto">
               📅 {format(dateRange.from, 'dd/MM/yyyy', { locale: vi })} - {format(dateRange.to, 'dd/MM/yyyy', { locale: vi })}
             </Button>
           </PopoverTrigger>
@@ -468,10 +475,10 @@ export default function ReportsPage() {
 
       {/* Total Expense */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 md:pt-6">
           <div className="text-center">
-            <p className="text-sm text-gray-600">Tổng chi tiêu</p>
-            <p className="text-4xl font-bold text-green-600 mt-2">
+            <p className="text-xs md:text-sm text-gray-600">Tổng chi tiêu</p>
+            <p className="text-2xl md:text-3xl lg:text-4xl font-bold text-green-600 mt-2">
               {totalExpense.toLocaleString('vi-VN')} ₫
             </p>
           </div>
@@ -479,14 +486,14 @@ export default function ReportsPage() {
       </Card>
 
       {/* Category Summary with Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Pie Chart */}
         <Card>
-          <CardHeader>
-            <CardTitle>Biểu đồ chi tiêu theo danh mục</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg">Biểu đồ chi tiêu theo danh mục</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
                   data={categorySummary as any}
@@ -494,10 +501,11 @@ export default function ReportsPage() {
                   nameKey="category_name"
                   cx="50%"
                   cy="50%"
-                  outerRadius={100}
+                  outerRadius={80}
                   label={(entry: any) => 
-                    `${entry.category_name}: ${((entry.percent || 0) * 100).toFixed(0)}%`
+                    `${entry.category_icon}: ${((entry.percent || 0) * 100).toFixed(0)}%`
                   }
+                  labelLine={false}
                 >
                   {categorySummary.map((cat) => (
                     <Cell key={cat.category_id} fill={cat.category_color} />
@@ -513,30 +521,30 @@ export default function ReportsPage() {
 
         {/* Category List */}
         <Card>
-          <CardHeader>
-            <CardTitle>Chi tiết theo danh mục</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg">Chi tiết theo danh mục</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 max-h-[300px] overflow-y-auto">
+            <div className="space-y-2 max-h-[250px] overflow-y-auto">
               {categorySummary.map((cat) => (
-                <div key={cat.category_id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
+                <div key={cat.category_id} className="flex items-center justify-between p-2 md:p-3 border rounded-lg">
+                  <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
                     <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
+                      className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-lg md:text-xl flex-shrink-0"
                       style={{ backgroundColor: cat.category_color + '20' }}
                     >
                       {cat.category_icon}
                     </div>
-                    <div>
-                      <p className="font-medium">{cat.category_name}</p>
-                      <p className="text-sm text-gray-500">{cat.count} giao dịch</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm md:text-base truncate">{cat.category_name}</p>
+                      <p className="text-xs md:text-sm text-gray-500">{cat.count} giao dịch</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-900">
+                  <div className="text-right ml-2 flex-shrink-0">
+                    <p className="font-bold text-gray-900 text-sm md:text-base">
                       {cat.total.toLocaleString('vi-VN')} ₫
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs md:text-sm text-gray-500">
                       {((cat.total / totalExpense) * 100).toFixed(1)}%
                     </p>
                   </div>
@@ -548,32 +556,33 @@ export default function ReportsPage() {
       </div>
 
       {/* User/Household Summary with Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Bar Chart */}
         <Card>
-          <CardHeader>
-            <CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg">
               Biểu đồ {currentRoom.split_by === 'USER' ? 'theo người' : 'theo hộ gia đình'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250}>
               <BarChart
                 data={currentRoom.split_by === 'USER' ? userSummary : householdSummary}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 10, right: 10, left: 0, bottom: 60 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey={currentRoom.split_by === 'USER' ? 'username' : 'household_name'}
                   angle={-45}
                   textAnchor="end"
-                  height={80}
+                  height={60}
+                  tick={{ fontSize: 12 }}
                 />
-                <YAxis />
+                <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip 
                   formatter={(value: any) => `${Number(value).toLocaleString('vi-VN')} ₫`}
                 />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="total_paid" fill="#10b981" name="Đã trả" />
                 <Bar dataKey="total_owed" fill="#f59e0b" name="Phải trả" />
               </BarChart>
@@ -583,23 +592,23 @@ export default function ReportsPage() {
 
         {/* Summary List */}
         <Card>
-          <CardHeader>
-            <CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg">
               {currentRoom.split_by === 'USER' ? 'Chi tiết theo người' : 'Chi tiết theo hộ gia đình'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 max-h-[300px] overflow-y-auto">
+            <div className="space-y-2 max-h-[250px] overflow-y-auto">
               {currentRoom.split_by === 'USER' ? (
                 userSummary.map((user) => (
-                  <div key={user.user_id} className="p-3 border rounded-lg">
+                  <div key={user.user_id} className="p-2 md:p-3 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="font-medium">{user.username}</p>
-                      <p className={`font-bold ${user.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <p className="font-medium text-sm md:text-base truncate flex-1 mr-2">{user.username}</p>
+                      <p className={`font-bold text-sm md:text-base flex-shrink-0 ${user.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {user.balance >= 0 ? '+' : ''}{user.balance.toLocaleString('vi-VN')} ₫
                       </p>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-2 gap-2 text-xs md:text-sm">
                       <div>
                         <p className="text-gray-500">Đã trả</p>
                         <p className="font-medium">{user.total_paid.toLocaleString('vi-VN')} ₫</p>
@@ -613,17 +622,17 @@ export default function ReportsPage() {
                 ))
               ) : (
                 householdSummary.map((household) => (
-                  <div key={household.household_id} className="p-3 border rounded-lg">
+                  <div key={household.household_id} className="p-2 md:p-3 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <p className="font-medium">{household.household_name}</p>
-                        <p className="text-sm text-gray-500">{household.member_count} thành viên</p>
+                      <div className="min-w-0 flex-1 mr-2">
+                        <p className="font-medium text-sm md:text-base truncate">{household.household_name}</p>
+                        <p className="text-xs md:text-sm text-gray-500">{household.member_count} thành viên</p>
                       </div>
-                      <p className={`font-bold ${household.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <p className={`font-bold text-sm md:text-base flex-shrink-0 ${household.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {household.balance >= 0 ? '+' : ''}{household.balance.toLocaleString('vi-VN')} ₫
                       </p>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-2 gap-2 text-xs md:text-sm">
                       <div>
                         <p className="text-gray-500">Đã trả</p>
                         <p className="font-medium">{household.total_paid.toLocaleString('vi-VN')} ₫</p>
@@ -644,20 +653,20 @@ export default function ReportsPage() {
       {/* Settlements */}
       {settlements.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Thanh toán đề xuất</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg">Thanh toán đề xuất</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {settlements.map((s, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                  <span className="text-2xl">💸</span>
-                  <p className="flex-1">
-                    <span className="font-medium">{s.from}</span>
+                <div key={idx} className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-blue-50 rounded-lg">
+                  <span className="text-xl md:text-2xl flex-shrink-0">💸</span>
+                  <p className="flex-1 min-w-0 text-sm md:text-base">
+                    <span className="font-medium truncate inline-block max-w-[100px] md:max-w-none align-bottom">{s.from}</span>
                     {' trả '}
-                    <span className="font-medium">{s.to}</span>
+                    <span className="font-medium truncate inline-block max-w-[100px] md:max-w-none align-bottom">{s.to}</span>
                   </p>
-                  <p className="font-bold text-blue-600">
+                  <p className="font-bold text-blue-600 text-sm md:text-base flex-shrink-0">
                     {s.amount.toLocaleString('vi-VN')} ₫
                   </p>
                 </div>
@@ -669,66 +678,73 @@ export default function ReportsPage() {
 
       {/* Transaction Details */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Chi tiết giao dịch ({filteredTransactions.length})</CardTitle>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <CardTitle className="text-base md:text-lg">Chi tiết giao dịch ({filteredTransactions.length})</CardTitle>
             <div className="flex gap-2">
               {/* Category Filter */}
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border rounded-lg text-sm"
-              >
-                <option value="all">Tất cả danh mục</option>
-                {categorySummary.map((cat) => (
-                  <option key={cat.category_id} value={cat.category_name}>
-                    {cat.category_icon} {cat.category_name}
-                  </option>
-                ))}
-              </select>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="flex-1 md:flex-none md:w-[180px] text-xs md:text-sm">
+                  <SelectValue placeholder="Tất cả danh mục" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  {categorySummary.map((cat) => (
+                    <SelectItem key={cat.category_id} value={cat.category_name}>
+                      <span className="flex items-center gap-2">
+                        <span>{cat.category_icon}</span>
+                        <span>{cat.category_name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               {/* Sort */}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'date' | 'amount')}
-                className="px-3 py-2 border rounded-lg text-sm"
-              >
-                <option value="date">Sắp xếp theo ngày</option>
-                <option value="amount">Sắp xếp theo số tiền</option>
-              </select>
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'date' | 'amount')}>
+                <SelectTrigger className="flex-1 md:flex-none md:w-[140px] text-xs md:text-sm">
+                  <SelectValue placeholder="Sắp xếp" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date">Theo ngày</SelectItem>
+                  <SelectItem value="amount">Theo tiền</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 max-h-[500px] overflow-y-auto">
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
             {filteredTransactions.length > 0 ? (
               filteredTransactions.map((t) => (
-                <div key={t.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                <div key={t.id} className="flex items-start gap-2 md:gap-3 p-2 md:p-3 border rounded-lg hover:bg-gray-50">
                   <div 
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-xl flex-shrink-0"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-lg md:text-xl flex-shrink-0"
                     style={{ backgroundColor: t.category.color + '20' }}
                   >
                     {t.category.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-gray-900 truncate">{t.note}</p>
-                      <p className="font-bold text-gray-900 ml-2">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <p className="font-medium text-gray-900 text-sm md:text-base line-clamp-2">{t.note}</p>
+                      <p className="font-bold text-gray-900 text-sm md:text-base flex-shrink-0">
                         {t.amount.toLocaleString('vi-VN')} ₫
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <div className="flex flex-wrap items-center gap-1 md:gap-2 text-xs md:text-sm text-gray-500">
                       <span>{format(new Date(t.date), 'dd/MM/yyyy', { locale: vi })}</span>
                       <span>•</span>
-                      <span>{t.category.name}</span>
-                      <span>•</span>
-                      <span>Trả bởi: {t.paid_by_user.username}</span>
+                      <span className="truncate max-w-[100px] md:max-w-none">{t.category.name}</span>
+                      <span className="hidden md:inline">•</span>
+                      <span className="truncate max-w-[120px] md:max-w-none">
+                        <span className="hidden md:inline">Trả bởi: </span>{t.paid_by_user.username}
+                      </span>
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-500 text-sm">
                 Không có giao dịch nào
               </div>
             )}
