@@ -174,6 +174,11 @@ export default function DashboardPage() {
         {/* Welcome Text */}
         <div className="text-black mb-20">
           <h1 className="text-2xl font-bold">Chào {username}!</h1>
+          {currentRoom && (
+            <p className="text-sm text-black/90 mt-1 font-bold">
+              {currentRoom.type === 'PRIVATE' ? '💼' : '🏠'} {currentRoom.name}
+            </p>
+          )}
         </div>
 
         {!currentRoom ? (
