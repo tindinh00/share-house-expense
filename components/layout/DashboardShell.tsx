@@ -55,7 +55,7 @@ export default function DashboardShell({ user, profile, children }: DashboardShe
           onToggle={() => toggleSidebar(!isSidebarOpen)}
         />
         
-        <main className={`flex-1 p-4 md:p-6 lg:p-8 transition-all duration-300 bg-transparent ${isSidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
+        <main className={`flex-1 p-4 md:p-6 lg:p-8 transition-all duration-300 ${isSidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
