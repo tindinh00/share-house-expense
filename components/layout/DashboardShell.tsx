@@ -41,21 +41,21 @@ export default function DashboardShell({ user, profile, children }: DashboardShe
   };
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Header 
         user={user} 
         profile={profile}
         onMenuClick={() => toggleSidebar(!isSidebarOpen)}
       />
       
-      <div className="flex">
+      <div className="flex flex-1">
         <Sidebar 
           isOpen={isSidebarOpen}
           onClose={() => toggleSidebar(false)}
           onToggle={() => toggleSidebar(!isSidebarOpen)}
         />
         
-        <main className={`flex-1 p-4 md:p-6 lg:p-8 transition-all duration-300 ${isSidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
+        <main className={`flex-1 p-4 md:p-6 lg:p-8 pb-24 md:pb-6 transition-all duration-300 ${isSidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
@@ -63,6 +63,6 @@ export default function DashboardShell({ user, profile, children }: DashboardShe
       </div>
       
       <BottomNav />
-    </>
+    </div>
   );
 }

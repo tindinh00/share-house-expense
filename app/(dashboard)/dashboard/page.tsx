@@ -166,13 +166,13 @@ export default function DashboardPage() {
       {showLoginToast && <LoginToast username={username} />}
       
       {/* Green Background Section with Curve - 1/3 screen */}
-      <div className="absolute top-0 left-0 right-0 h-[33vh] bg-green-600 overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-[33vh] bg-green-600 overflow-hidden -z-10">
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gray-50 rounded-t-[40px] -mb-4"></div>
       </div>
       
       <div className="relative space-y-4 pb-20 md:pb-6">
         {/* Welcome Text */}
-        <div className="text-white mb-20">
+        <div className="text-black mb-20">
           <h1 className="text-2xl font-bold">Chào {username}!</h1>
         </div>
 

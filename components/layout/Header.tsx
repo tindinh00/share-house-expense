@@ -33,7 +33,7 @@ export default function Header({ user, profile, onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="bg-gradient-to-r from-green-600 to-green-500 shadow-md sticky top-0 z-50 safe-area-top">
+    <header className="bg-green-600 shadow-md sticky top-0 z-[100] safe-area-top">
       <div className="px-4 md:px-6 lg:px-8 pt-safe">
         <div className="flex items-center justify-between h-16">
           {/* Hamburger Menu Button (Mobile & Desktop) */}
