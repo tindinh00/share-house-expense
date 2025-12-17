@@ -8,6 +8,7 @@ import { useRoom } from '@/contexts/RoomContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoginToast } from '@/components/LoginToast';
+import { TransactionDetailDialog } from '@/components/TransactionDetailDialog';
 
 interface Transaction {
   id: string;
@@ -16,6 +17,8 @@ interface Transaction {
   note: string;
   category_id: string;
   paid_by: string;
+  created_by: string;
+  created_at: string;
   categories: {
     name: string;
     icon: string;
@@ -39,6 +42,7 @@ export default function DashboardPage() {
   const { currentRoom } = useRoom();
 
   const [username, setUsername] = useState('bạn');
+  const [currentUserId, setCurrentUserId] = useState<string>('');
   const [stats, setStats] = useState<Stats>({
     monthlyTotal: 0,
     transactionCount: 0,
@@ -46,6 +50,34 @@ export default function DashboardPage() {
   });
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+
+  // Generate color for room based on room type and ID
+  const getRoomColor = (roomId: string, roomType?: string) => {
+    // Private room (Ví cá nhân) always gets amber/yellow color
+    if (roomType === 'PRIVATE') {
+      return { 
+        bg: 'bg-amber-50', 
+        text: 'text-amber-700', 
+        border: 'border-amber-300'
+      };
+    }
+    
+    // Shared rooms get different colors
+    const colors = [
+      { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
+      { bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-200' },
+      { bg: 'bg-pink-50', text: 'text-pink-600', border: 'border-pink-200' },
+      { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' },
+      { bg: 'bg-teal-50', text: 'text-teal-600', border: 'border-teal-200' },
+      { bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-200' },
+    ];
+    
+    // Use room ID to consistently pick a color
+    const hash = roomId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
+  };
 
   useEffect(() => {
     loadDashboardData();
@@ -56,6 +88,8 @@ export default function DashboardPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      setCurrentUserId(user.id);
 
       // Load profile
       const { data: profile } = await supabase
@@ -110,6 +144,8 @@ export default function DashboardPage() {
           note,
           category_id,
           paid_by,
+          created_by,
+          created_at,
           categories (name, icon, color),
           profiles:paid_by (username)
         `)
@@ -172,12 +208,20 @@ export default function DashboardPage() {
       
       <div className="relative space-y-4 pb-20 md:pb-6">
         {/* Welcome Text */}
-        <div className="text-black mb-20">
-          <h1 className="text-2xl font-bold">Chào {username}!</h1>
+        <div className="text-center mb-20">
+          <p className="text-sm font-medium text-black/70">Chào {username}!</p>
           {currentRoom && (
-            <p className="text-sm text-black/90 mt-1 font-bold">
-              {currentRoom.type === 'PRIVATE' ? '💼' : '🏠'} {currentRoom.name}
-            </p>
+            <div className="flex justify-center mt-2">
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 ${
+                getRoomColor(currentRoom.id, currentRoom.type).bg + ' ' +
+                getRoomColor(currentRoom.id, currentRoom.type).border
+              }`}>
+                <span className="text-2xl">{currentRoom.type === 'PRIVATE' ? '💼' : '🏠'}</span>
+                <h1 className={`text-2xl font-bold ${getRoomColor(currentRoom.id, currentRoom.type).text}`}>
+                  {currentRoom.name}
+                </h1>
+              </div>
+            </div>
           )}
         </div>
 
@@ -285,7 +329,11 @@ export default function DashboardPage() {
                   {recentTransactions.map((transaction) => (
                     <div
                       key={transaction.id}
-                      className="flex items-start sm:items-center gap-2 sm:gap-3 p-2 sm:p-3 border rounded-lg hover:bg-accent transition"
+                      onClick={() => {
+                        setSelectedTransaction(transaction);
+                        setShowDetailDialog(true);
+                      }}
+                      className="flex items-start sm:items-center gap-2 sm:gap-3 p-2 sm:p-3 border rounded-lg hover:bg-accent transition cursor-pointer"
                     >
                       <div
                         className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -293,12 +341,14 @@ export default function DashboardPage() {
                       >
                         <span className="text-base sm:text-xl">{transaction.categories.icon}</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm sm:text-base text-gray-900 truncate">{transaction.note}</p>
-                        <p className="text-xs sm:text-sm text-gray-500 truncate">
-                          {transaction.categories.name} • {transaction.profiles.username}
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <p className="font-medium text-sm sm:text-base text-gray-900 truncate">{transaction.categories.name}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 break-all line-clamp-2">
+                          {transaction.note}
                         </p>
-                        <p className="text-xs text-gray-400 sm:hidden">{formatDate(transaction.date)}</p>
+                        <p className="text-xs text-gray-400 break-all line-clamp-1">
+                          {transaction.profiles.username} • <span className="sm:hidden">{formatDate(transaction.date)}</span>
+                        </p>
                       </div>
                       <div className="text-right flex-shrink-0">
                         <p className="font-semibold text-sm sm:text-base text-gray-900 whitespace-nowrap">
@@ -318,9 +368,16 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         )}
-
-
       </div>
+
+      {/* Transaction Detail Dialog */}
+      <TransactionDetailDialog
+        transaction={selectedTransaction}
+        open={showDetailDialog}
+        onOpenChange={setShowDetailDialog}
+        currentUserId={currentUserId}
+        onDeleted={loadDashboardData}
+      />
     </>
   );
 }

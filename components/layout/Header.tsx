@@ -22,6 +22,33 @@ export default function Header({ user, profile, onMenuClick }: HeaderProps) {
   const supabase = createClient();
   const { currentRoom, rooms, setCurrentRoom } = useRoom();
 
+  // Generate color for room based on room type and ID
+  const getRoomColor = (roomId: string, roomType?: string) => {
+    // Private room (Ví cá nhân) always gets amber/yellow color
+    if (roomType === 'PRIVATE') {
+      return { 
+        bg: 'bg-amber-50', 
+        text: 'text-amber-700', 
+        border: 'border-amber-300', 
+        hover: 'hover:bg-amber-100' 
+      };
+    }
+    
+    // Shared rooms get different colors
+    const colors = [
+      { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200', hover: 'hover:bg-blue-100' },
+      { bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-200', hover: 'hover:bg-purple-100' },
+      { bg: 'bg-pink-50', text: 'text-pink-600', border: 'border-pink-200', hover: 'hover:bg-pink-100' },
+      { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200', hover: 'hover:bg-emerald-100' },
+      { bg: 'bg-teal-50', text: 'text-teal-600', border: 'border-teal-200', hover: 'hover:bg-teal-100' },
+      { bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-200', hover: 'hover:bg-indigo-100' },
+    ];
+    
+    // Use room ID to consistently pick a color
+    const hash = roomId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
+  };
+
   const handleLogout = async () => {
     setIsLoggingOut(true);
     setShowUserMenu(false);
@@ -116,24 +143,29 @@ export default function Header({ user, profile, onMenuClick }: HeaderProps) {
                       </div>
                     ) : (
                       <>
-                        {rooms.map((room) => (
-                          <button
-                            key={room.id}
-                            onClick={() => {
-                              setCurrentRoom(room);
-                              setShowRoomMenu(false);
-                            }}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2 ${
-                              currentRoom?.id === room.id ? 'bg-green-50 text-green-700' : 'text-gray-700'
-                            }`}
-                          >
-                            <span>{room.type === 'PRIVATE' ? '💼' : '🏠'}</span>
-                            <span className="flex-1">{room.name}</span>
-                            {currentRoom?.id === room.id && (
-                              <span className="text-green-600">✓</span>
-                            )}
-                          </button>
-                        ))}
+                        {rooms.map((room) => {
+                          const roomColor = getRoomColor(room.id, room.type);
+                          return (
+                            <button
+                              key={room.id}
+                              onClick={() => {
+                                setCurrentRoom(room);
+                                setShowRoomMenu(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                                currentRoom?.id === room.id 
+                                  ? `${roomColor.bg} ${roomColor.text}` 
+                                  : `text-gray-700 ${roomColor.hover}`
+                              }`}
+                            >
+                              <span>{room.type === 'PRIVATE' ? '💼' : '🏠'}</span>
+                              <span className="flex-1">{room.name}</span>
+                              {currentRoom?.id === room.id && (
+                                <span>✓</span>
+                              )}
+                            </button>
+                          );
+                        })}
                         <div className="border-t border-gray-200 mt-2 pt-2">
                           <Link
                             href="/rooms"

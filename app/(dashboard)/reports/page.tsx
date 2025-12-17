@@ -29,10 +29,13 @@ import {
   Tooltip,
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
 } from 'recharts';
+import { TransactionDetailDialog } from '@/components/TransactionDetailDialog';
 
 interface CategorySummary {
   category_id: string;
@@ -102,6 +105,13 @@ export default function ReportsPage() {
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
   const [loading, setLoading] = useState(true);
   const [totalExpense, setTotalExpense] = useState(0);
+  const [actualSpending, setActualSpending] = useState<{user_id: string; username: string; total: number}[]>([]);
+  const [householdSpending, setHouseholdSpending] = useState<{household_id: string; household_name: string; total: number; transactions: TransactionDetail[]}[]>([]);
+  const [expandedHousehold, setExpandedHousehold] = useState<string | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [dailySpending, setDailySpending] = useState<any[]>([]);
 
   useEffect(() => {
     if (currentRoom) {
@@ -133,6 +143,10 @@ export default function ReportsPage() {
     
     setLoading(true);
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setCurrentUserId(user.id);
+
       await Promise.all([
         loadCategorySummary(),
         loadTransactionDetails(),
@@ -252,6 +266,21 @@ export default function ReportsPage() {
     const totalExpense = (transactions || []).reduce((sum, t) => sum + parseFloat(t.amount), 0);
     const perPersonShare = totalExpense / memberCount;
 
+    // Calculate actual spending (chi tiêu thực tế)
+    const spending = (members || []).map((m: any) => {
+      const total = (transactions || [])
+        .filter(t => t.paid_by === m.user_id)
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      
+      return {
+        user_id: m.user_id,
+        username: m.profiles.username,
+        total: total,
+      };
+    });
+    spending.sort((a, b) => b.total - a.total);
+    setActualSpending(spending);
+
     // Calculate summary
     const summary: UserSummary[] = (members || []).map((m: any) => {
       const paid = (transactions || [])
@@ -276,18 +305,23 @@ export default function ReportsPage() {
   };
 
   const loadHouseholdSummary = async () => {
-    // Load all transactions
+    // Load all transactions with full details
     const { data: transactions, error } = await supabase
       .from('transactions')
       .select(`
+        id,
+        date,
         amount,
+        note,
         paid_by,
-        profiles:paid_by (username)
+        categories:category_id (name, icon, color),
+        profiles:paid_by (username, email)
       `)
       .eq('room_id', currentRoom!.id)
       .gte('date', format(dateRange.from, 'yyyy-MM-dd'))
       .lte('date', format(dateRange.to, 'yyyy-MM-dd'))
-      .eq('is_deleted', false);
+      .eq('is_deleted', false)
+      .order('date', { ascending: false });
 
     if (error) throw error;
 
@@ -344,6 +378,65 @@ export default function ReportsPage() {
 
     summary.sort((a, b) => b.balance - a.balance);
     setHouseholdSummary(summary);
+    
+    // Calculate actual spending with transactions for each household
+    const spending = await Promise.all(
+      (roomHouseholds || []).map(async (h: any) => {
+        const householdTransactions = (transactions || [])
+          .filter(t => userToHousehold.get(t.paid_by) === h.household_id)
+          .map((t: any) => ({
+            id: t.id,
+            date: t.date,
+            amount: parseFloat(t.amount),
+            note: t.note,
+            category: {
+              name: t.categories.name,
+              icon: t.categories.icon,
+              color: t.categories.color,
+            },
+            paid_by_user: {
+              username: t.profiles.username,
+              email: t.profiles.email,
+            },
+          }));
+
+        const total = householdTransactions.reduce((sum, t) => sum + t.amount, 0);
+
+        return {
+          household_id: h.household_id,
+          household_name: h.households.name,
+          total: total,
+          transactions: householdTransactions,
+        };
+      })
+    );
+    spending.sort((a, b) => b.total - a.total);
+    setHouseholdSpending(spending);
+    
+    // Calculate daily spending for chart
+    const dailyData: any = {};
+    (transactions || []).forEach((t: any) => {
+      const date = t.date;
+      const householdId = userToHousehold.get(t.paid_by);
+      const household = (roomHouseholds || []).find((h: any) => h.household_id === householdId);
+      
+      if (!dailyData[date]) {
+        dailyData[date] = { date };
+      }
+      
+      if (household) {
+        const householdName = household.households.name;
+        if (!dailyData[date][householdName]) {
+          dailyData[date][householdName] = 0;
+        }
+        dailyData[date][householdName] += parseFloat(t.amount);
+      }
+    });
+    
+    const dailyArray = Object.values(dailyData).sort((a: any, b: any) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    setDailySpending(dailyArray);
     
     // Calculate settlements
     calculateSettlementsForHouseholds(summary);
@@ -485,6 +578,327 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
+      {/* Actual Spending Summary - For USER split (only for shared rooms with multiple users) */}
+      {currentRoom.split_by === 'USER' && currentRoom.type !== 'PRIVATE' && actualSpending.length > 1 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg">💰 Chi tiêu thực tế trong tháng</CardTitle>
+            <p className="text-xs md:text-sm text-gray-500 mt-1">
+              Tổng số tiền mỗi người đã chi (không chia đều)
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {actualSpending.map((person, index) => (
+                <div key={person.user_id} className="relative">
+                  <div className="flex items-center justify-between p-3 md:p-4 bg-gradient-to-r from-green-50 to-transparent rounded-lg border-2 border-green-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-bold text-base md:text-lg text-gray-900">{person.username}</p>
+                        <p className="text-xs md:text-sm text-gray-500">
+                          {((person.total / totalExpense) * 100).toFixed(1)}% tổng chi tiêu
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-lg md:text-xl text-green-600">
+                        {person.total.toLocaleString('vi-VN')} ₫
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Show debt relationship from this person's perspective */}
+                  {index === 0 && actualSpending.length > 1 && (
+                    <div className="mt-3 ml-4 md:ml-6 pl-4 border-l-2 border-gray-200 space-y-2">
+                      <p className="text-xs md:text-sm font-medium text-gray-600 mb-2">
+                        📊 Từ góc nhìn của {person.username}:
+                      </p>
+                      {actualSpending.slice(1).map((other) => {
+                        const difference = person.total - other.total;
+                        const halfDiff = difference / 2;
+                        
+                        if (Math.abs(halfDiff) < 1000) return null;
+                        
+                        return (
+                          <div key={other.user_id} className="flex items-center gap-2 text-xs md:text-sm p-2 bg-blue-50 rounded">
+                            {halfDiff > 0 ? (
+                              <>
+                                <span className="text-blue-600">💵</span>
+                                <span className="flex-1">
+                                  <span className="font-medium">{other.username}</span> cần trả{' '}
+                                  <span className="font-bold text-blue-600">
+                                    {Math.round(halfDiff).toLocaleString('vi-VN')} ₫
+                                  </span>
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-orange-600">💸</span>
+                                <span className="flex-1">
+                                  Cần trả <span className="font-medium">{other.username}</span>{' '}
+                                  <span className="font-bold text-orange-600">
+                                    {Math.round(Math.abs(halfDiff)).toLocaleString('vi-VN')} ₫
+                                  </span>
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Actual Spending Summary - For HOUSEHOLD split (only for shared rooms with multiple households) */}
+      {currentRoom.split_by === 'HOUSEHOLD' && householdSpending.length > 1 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg">💰 Chi tiêu thực tế của các hộ gia đình</CardTitle>
+            <p className="text-xs md:text-sm text-gray-500 mt-1">
+              Tổng số tiền mỗi hộ đã chi trong kỳ (click để xem chi tiết)
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {householdSpending.map((household, index) => (
+                <div key={household.household_id} className="relative">
+                  <div 
+                    className="flex items-center justify-between p-3 md:p-4 bg-gradient-to-r from-green-50 to-transparent rounded-lg border-2 border-green-100 cursor-pointer hover:border-green-300 transition"
+                    onClick={() => setExpandedHousehold(expandedHousehold === household.household_id ? null : household.household_id)}
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-base md:text-lg text-gray-900 truncate">{household.household_name}</p>
+                        <p className="text-xs md:text-sm text-gray-500">
+                          {household.transactions.length} giao dịch • {((household.total / totalExpense) * 100).toFixed(1)}% tổng chi tiêu
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="text-right">
+                        <p className="font-bold text-lg md:text-xl text-green-600">
+                          {household.total.toLocaleString('vi-VN')} ₫
+                        </p>
+                      </div>
+                      <svg 
+                        className={`w-5 h-5 text-gray-400 transition-transform ${expandedHousehold === household.household_id ? 'rotate-180' : ''}`}
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Expanded transactions list */}
+                  {expandedHousehold === household.household_id && (
+                    <div className="mt-2 ml-4 md:ml-6 pl-4 border-l-2 border-green-200">
+                      <p className="text-xs md:text-sm font-medium text-gray-600 mb-2 mt-2">
+                        📋 Danh sách giao dịch:
+                      </p>
+                      <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                        {household.transactions.map((t) => (
+                          <div 
+                            key={t.id} 
+                            className="flex items-start gap-2 p-2 bg-white border rounded-lg hover:bg-gray-50 cursor-pointer transition"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedTransaction({
+                                ...t,
+                                created_by: currentUserId,
+                                created_at: t.date,
+                                categories: t.category,
+                                profiles: t.paid_by_user,
+                              });
+                              setShowDetailDialog(true);
+                            }}
+                          >
+                          <div 
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                            style={{ backgroundColor: t.category.color + '20' }}
+                          >
+                            {t.category.icon}
+                          </div>
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm text-gray-900 truncate">{t.category.name}</p>
+                                <p className="text-xs text-gray-500 break-all line-clamp-1">{t.note}</p>
+                                <p className="text-xs text-gray-400">
+                                  {format(new Date(t.date), 'dd/MM/yyyy', { locale: vi })} • {t.paid_by_user.username}
+                                </p>
+                              </div>
+                              <p className="font-bold text-sm text-gray-900 whitespace-nowrap flex-shrink-0">
+                                {t.amount.toLocaleString('vi-VN')} ₫
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show debt relationship from this household's perspective */}
+                  {expandedHousehold === household.household_id && householdSpending.length > 1 && (
+                    <div className="mt-3 ml-4 md:ml-6 pl-4 border-l-2 border-blue-200 space-y-2">
+                      <p className="text-xs md:text-sm font-medium text-gray-600 mb-2">
+                        💡 Từ góc nhìn của {household.household_name}:
+                      </p>
+                      <div className="text-xs md:text-sm p-2 bg-amber-50 rounded border border-amber-200 mb-2">
+                        <p className="text-amber-800">
+                          📊 Mỗi hộ phải trả: <span className="font-bold">{(totalExpense / householdSpending.length).toLocaleString('vi-VN')} ₫</span>
+                        </p>
+                        <p className="text-amber-700 mt-1">
+                          {household.household_name} đã chi: <span className="font-bold">{household.total.toLocaleString('vi-VN')} ₫</span>
+                        </p>
+                        <p className={`mt-1 font-bold ${household.total >= (totalExpense / householdSpending.length) ? 'text-green-700' : 'text-red-700'}`}>
+                          {household.total >= (totalExpense / householdSpending.length) 
+                            ? `✅ Đã trả đủ (thừa ${(household.total - (totalExpense / householdSpending.length)).toLocaleString('vi-VN')} ₫)`
+                            : `⚠️ Còn thiếu ${((totalExpense / householdSpending.length) - household.total).toLocaleString('vi-VN')} ₫`
+                          }
+                        </p>
+                      </div>
+                      {householdSpending
+                        .filter(other => other.household_id !== household.household_id)
+                        .map((other) => {
+                          const perHouseholdShare = totalExpense / householdSpending.length;
+                          const currentBalance = household.total - perHouseholdShare;
+                          const otherBalance = other.total - perHouseholdShare;
+                          
+                          // If current household paid more than share
+                          if (currentBalance > 1000 && otherBalance < -1000) {
+                            const amountOwed = Math.min(Math.abs(otherBalance), currentBalance);
+                            return (
+                              <div key={other.household_id} className="flex items-center gap-2 text-xs md:text-sm p-2 bg-blue-50 rounded">
+                                <span className="text-blue-600">💵</span>
+                                <span className="flex-1">
+                                  <span className="font-medium">{other.household_name}</span> cần trả{' '}
+                                  <span className="font-bold text-blue-600">
+                                    {Math.round(amountOwed).toLocaleString('vi-VN')} ₫
+                                  </span>
+                                </span>
+                              </div>
+                            );
+                          }
+                          
+                          // If current household paid less than share
+                          if (currentBalance < -1000 && otherBalance > 1000) {
+                            const amountOwed = Math.min(Math.abs(currentBalance), otherBalance);
+                            return (
+                              <div key={other.household_id} className="flex items-center gap-2 text-xs md:text-sm p-2 bg-orange-50 rounded">
+                                <span className="text-orange-600">💸</span>
+                                <span className="flex-1">
+                                  Cần trả <span className="font-medium">{other.household_name}</span>{' '}
+                                  <span className="font-bold text-orange-600">
+                                    {Math.round(amountOwed).toLocaleString('vi-VN')} ₫
+                                  </span>
+                                </span>
+                              </div>
+                            );
+                          }
+                          
+                          // Both paid similar to their share
+                          return (
+                            <div key={other.household_id} className="flex items-center gap-2 text-xs md:text-sm p-2 bg-gray-50 rounded">
+                              <span>ℹ️</span>
+                              <span className="flex-1 text-gray-600">
+                                <span className="font-medium">{other.household_name}</span> đã chi {other.total.toLocaleString('vi-VN')} ₫
+                                {otherBalance > 0 ? ` (thừa ${Math.round(otherBalance).toLocaleString('vi-VN')} ₫)` : 
+                                 otherBalance < 0 ? ` (thiếu ${Math.round(Math.abs(otherBalance)).toLocaleString('vi-VN')} ₫)` : 
+                                 ' (đủ)'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Settlements */}
+      {settlements.length > 0 && (
+        <Card className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-white">
+          <CardHeader className="pb-3 border-b border-orange-100">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-2xl">💸</span>
+              </div>
+              <div>
+                <CardTitle className="text-base md:text-lg text-orange-900">Thanh toán đề xuất</CardTitle>
+                <p className="text-xs md:text-sm text-orange-700 mt-0.5">
+                  {currentRoom.split_by === 'HOUSEHOLD' && householdSpending.length > 0 
+                    ? `Mỗi hộ phải trả: ${(totalExpense / householdSpending.length).toLocaleString('vi-VN')} ₫`
+                    : 'Cách thanh toán tối ưu'
+                  }
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="space-y-3">
+              {settlements.map((s, idx) => (
+                <div key={idx} className="relative group">
+                  {/* Arrow decoration */}
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-gradient-to-r from-orange-300 via-orange-400 to-orange-300 opacity-20 group-hover:opacity-40 transition -z-10"></div>
+                  
+                  <div className="flex items-center gap-3 md:gap-4">
+                    {/* From */}
+                    <div className="flex-1 bg-white rounded-lg p-3 md:p-4 shadow-sm border border-orange-100 group-hover:shadow-md transition">
+                      <p className="text-xs text-orange-600 font-medium mb-1">Người trả</p>
+                      <p className="font-bold text-sm md:text-base text-gray-900 truncate">{s.from}</p>
+                    </div>
+
+                    {/* Arrow & Amount */}
+                    <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                      <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition">
+                        <svg className="w-6 h-6 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </div>
+                      <div className="bg-orange-600 text-white px-2 md:px-3 py-1 rounded-full shadow-sm">
+                        <p className="font-bold text-xs md:text-sm whitespace-nowrap">
+                          {s.amount.toLocaleString('vi-VN')} ₫
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* To */}
+                    <div className="flex-1 bg-white rounded-lg p-3 md:p-4 shadow-sm border border-green-100 group-hover:shadow-md transition">
+                      <p className="text-xs text-green-600 font-medium mb-1">Người nhận</p>
+                      <p className="font-bold text-sm md:text-base text-gray-900 truncate">{s.to}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Summary */}
+            <div className="mt-4 p-3 bg-white/50 rounded-lg border border-orange-200">
+              <p className="text-xs md:text-sm text-orange-800 text-center">
+                ✨ Tổng cộng <span className="font-bold">{settlements.length}</span> giao dịch để cân bằng chi tiêu
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Category Summary with Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Pie Chart */}
@@ -557,124 +971,89 @@ export default function ReportsPage() {
 
       {/* User/Household Summary with Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* Bar Chart */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base md:text-lg">
-              Biểu đồ {currentRoom.split_by === 'USER' ? 'theo người' : 'theo hộ gia đình'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart
-                data={currentRoom.split_by === 'USER' ? userSummary : householdSummary}
-                margin={{ top: 10, right: 10, left: 0, bottom: 60 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey={currentRoom.split_by === 'USER' ? 'username' : 'household_name'}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip 
-                  formatter={(value: any) => `${Number(value).toLocaleString('vi-VN')} ₫`}
-                />
-                <Legend wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="total_paid" fill="#10b981" name="Đã trả" />
-                <Bar dataKey="total_owed" fill="#f59e0b" name="Phải trả" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        {/* Daily Spending Chart for Households */}
+        {currentRoom.split_by === 'HOUSEHOLD' && dailySpending.length > 0 ? (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base md:text-lg">
+                Chi tiêu theo ngày
+              </CardTitle>
+              <p className="text-xs md:text-sm text-gray-500 mt-1">
+                Theo dõi chi tiêu hàng ngày của các hộ
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart
+                  data={dailySpending}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="date"
+                    tickFormatter={(date) => format(new Date(date), 'dd/MM', { locale: vi })}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip 
+                    labelFormatter={(date) => format(new Date(date), 'dd/MM/yyyy', { locale: vi })}
+                    formatter={(value: any) => `${Number(value).toLocaleString('vi-VN')} ₫`}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} />
+                  {householdSpending.map((household, index) => {
+                    const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+                    return (
+                      <Line
+                        key={household.household_id}
+                        type="monotone"
+                        dataKey={household.household_name}
+                        stroke={colors[index % colors.length]}
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        name={household.household_name}
+                      />
+                    );
+                  })}
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        ) : (
+          /* Bar Chart for Users */
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base md:text-lg">
+                Biểu đồ chi tiêu theo người
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart
+                  data={userSummary}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 60 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="username"
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip 
+                    formatter={(value: any) => `${Number(value).toLocaleString('vi-VN')} ₫`}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '12px' }} />
+                  <Bar dataKey="total_paid" fill="#10b981" name="Đã trả" />
+                  <Bar dataKey="total_owed" fill="#f59e0b" name="Phải trả" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Summary List */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base md:text-lg">
-              {currentRoom.split_by === 'USER' ? 'Chi tiết theo người' : 'Chi tiết theo hộ gia đình'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-h-[250px] overflow-y-auto">
-              {currentRoom.split_by === 'USER' ? (
-                userSummary.map((user) => (
-                  <div key={user.user_id} className="p-2 md:p-3 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="font-medium text-sm md:text-base truncate flex-1 mr-2">{user.username}</p>
-                      <p className={`font-bold text-sm md:text-base flex-shrink-0 ${user.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {user.balance >= 0 ? '+' : ''}{user.balance.toLocaleString('vi-VN')} ₫
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs md:text-sm">
-                      <div>
-                        <p className="text-gray-500">Đã trả</p>
-                        <p className="font-medium">{user.total_paid.toLocaleString('vi-VN')} ₫</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Phải trả</p>
-                        <p className="font-medium">{user.total_owed.toLocaleString('vi-VN')} ₫</p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                householdSummary.map((household) => (
-                  <div key={household.household_id} className="p-2 md:p-3 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="min-w-0 flex-1 mr-2">
-                        <p className="font-medium text-sm md:text-base truncate">{household.household_name}</p>
-                        <p className="text-xs md:text-sm text-gray-500">{household.member_count} thành viên</p>
-                      </div>
-                      <p className={`font-bold text-sm md:text-base flex-shrink-0 ${household.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {household.balance >= 0 ? '+' : ''}{household.balance.toLocaleString('vi-VN')} ₫
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs md:text-sm">
-                      <div>
-                        <p className="text-gray-500">Đã trả</p>
-                        <p className="font-medium">{household.total_paid.toLocaleString('vi-VN')} ₫</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Phải trả</p>
-                        <p className="font-medium">{household.total_owed.toLocaleString('vi-VN')} ₫</p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
       </div>
-
-      {/* Settlements */}
-      {settlements.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base md:text-lg">Thanh toán đề xuất</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {settlements.map((s, idx) => (
-                <div key={idx} className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-blue-50 rounded-lg">
-                  <span className="text-xl md:text-2xl flex-shrink-0">💸</span>
-                  <p className="flex-1 min-w-0 text-sm md:text-base">
-                    <span className="font-medium truncate inline-block max-w-[100px] md:max-w-none align-bottom">{s.from}</span>
-                    {' trả '}
-                    <span className="font-medium truncate inline-block max-w-[100px] md:max-w-none align-bottom">{s.to}</span>
-                  </p>
-                  <p className="font-bold text-blue-600 text-sm md:text-base flex-shrink-0">
-                    {s.amount.toLocaleString('vi-VN')} ₫
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Transaction Details */}
       <Card>
@@ -717,27 +1096,39 @@ export default function ReportsPage() {
           <div className="space-y-2 max-h-[400px] overflow-y-auto">
             {filteredTransactions.length > 0 ? (
               filteredTransactions.map((t) => (
-                <div key={t.id} className="flex items-start gap-2 md:gap-3 p-2 md:p-3 border rounded-lg hover:bg-gray-50">
+                <div 
+                  key={t.id} 
+                  className="flex items-start gap-2 md:gap-3 p-2 md:p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition"
+                  onClick={() => {
+                    setSelectedTransaction({
+                      ...t,
+                      created_by: currentUserId,
+                      created_at: t.date,
+                      categories: t.category,
+                      profiles: t.paid_by_user,
+                    });
+                    setShowDetailDialog(true);
+                  }}
+                >
                   <div 
                     className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-lg md:text-xl flex-shrink-0"
                     style={{ backgroundColor: t.category.color + '20' }}
                   >
                     {t.category.icon}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 overflow-hidden">
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <p className="font-medium text-gray-900 text-sm md:text-base line-clamp-2">{t.note}</p>
-                      <p className="font-bold text-gray-900 text-sm md:text-base flex-shrink-0">
+                      <p className="font-medium text-gray-900 text-sm md:text-base truncate">{t.category.name}</p>
+                      <p className="font-bold text-gray-900 text-sm md:text-base flex-shrink-0 whitespace-nowrap">
                         {t.amount.toLocaleString('vi-VN')} ₫
                       </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-1 md:gap-2 text-xs md:text-sm text-gray-500">
-                      <span>{format(new Date(t.date), 'dd/MM/yyyy', { locale: vi })}</span>
+                    <p className="text-xs md:text-sm text-gray-500 break-all line-clamp-2 mb-1">{t.note}</p>
+                    <div className="flex flex-wrap items-center gap-1 md:gap-2 text-xs text-gray-400">
+                      <span className="whitespace-nowrap">{format(new Date(t.date), 'dd/MM/yyyy', { locale: vi })}</span>
                       <span>•</span>
-                      <span className="truncate max-w-[100px] md:max-w-none">{t.category.name}</span>
-                      <span className="hidden md:inline">•</span>
-                      <span className="truncate max-w-[120px] md:max-w-none">
-                        <span className="hidden md:inline">Trả bởi: </span>{t.paid_by_user.username}
+                      <span className="break-all line-clamp-1">
+                        {t.paid_by_user.username}
                       </span>
                     </div>
                   </div>
@@ -751,6 +1142,15 @@ export default function ReportsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Transaction Detail Dialog - View only, no edit/delete */}
+      <TransactionDetailDialog
+        transaction={selectedTransaction}
+        open={showDetailDialog}
+        onOpenChange={setShowDetailDialog}
+        currentUserId={undefined}
+        onDeleted={loadReports}
+      />
     </div>
   );
 }

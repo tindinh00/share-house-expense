@@ -8,18 +8,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { TransactionDetailDialog } from '@/components/TransactionDetailDialog';
 
 export default function TransactionsPage() {
   const router = useRouter();
@@ -28,6 +17,8 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
 
   useEffect(() => {
     if (currentRoom) {
@@ -88,23 +79,7 @@ export default function TransactionsPage() {
     }
   };
 
-  const handleDelete = async (transactionId: string) => {
-    try {
-      const { error } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('id', transactionId);
 
-      if (error) throw error;
-
-      toast.success('✅ Đã xóa giao dịch!');
-      // Reload transactions
-      loadTransactions();
-    } catch (error: any) {
-      console.error('Error deleting transaction:', error);
-      toast.error('❌ Lỗi: ' + error.message);
-    }
-  };
 
   // Group transactions by date
   const groupedTransactions = transactions?.reduce((groups: any, transaction: any) => {
@@ -171,7 +146,14 @@ export default function TransactionsPage() {
               {/* Transactions for this date */}
               <div className="space-y-2">
                 {items.map((transaction: any) => (
-                  <Card key={transaction.id} className="p-3 sm:p-4 hover:shadow-md transition">
+                  <Card 
+                    key={transaction.id} 
+                    className="p-3 sm:p-4 hover:shadow-md transition cursor-pointer"
+                    onClick={() => {
+                      setSelectedTransaction(transaction);
+                      setShowDetailDialog(true);
+                    }}
+                  >
                     <div className="flex items-start sm:items-center gap-3">
                       {/* Icon */}
                       <div 
@@ -188,68 +170,29 @@ export default function TransactionsPage() {
                       </div>
 
                       {/* Content */}
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 overflow-hidden">
                         <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 overflow-hidden">
                             <p className="font-medium text-sm sm:text-base text-gray-900 truncate">
+                              {transaction.categories?.name || 'Khác'}
+                            </p>
+                            <p className="text-xs sm:text-sm text-gray-500 break-all line-clamp-2 mt-1">
                               {transaction.note}
                             </p>
                             <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
-                              <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded whitespace-nowrap">
-                                {transaction.categories?.name || 'Khác'}
-                              </span>
                               {transaction.profiles?.username && (
-                                <span className="text-xs text-gray-500 truncate">
-                                  • {transaction.profiles.username}
+                                <span className="text-xs text-gray-400 break-all line-clamp-1">
+                                  {transaction.profiles.username}
                                 </span>
                               )}
                             </div>
                           </div>
-                          <p className="font-bold text-sm sm:text-lg text-gray-900 whitespace-nowrap ml-2">
+                          <p className="font-bold text-sm sm:text-lg text-gray-900 whitespace-nowrap ml-2 flex-shrink-0">
                             {formatCurrency(transaction.amount)}
                           </p>
                         </div>
 
-                        {/* Action buttons - only show if user created this transaction */}
-                        {transaction.created_by === currentUserId && (
-                          <div className="flex gap-2 mt-3 sm:mt-2">
-                            <Link href={`/transactions/edit/${transaction.id}`} className="flex-1 sm:flex-none">
-                              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                                <span className="mr-1">✏️</span>
-                                <span className="sm:hidden">Sửa</span>
-                              </Button>
-                            </Link>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  className="flex-1 sm:flex-none text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <span className="mr-1">🗑️</span>
-                                  <span className="sm:hidden">Xóa</span>
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent className="max-w-[90vw] sm:max-w-lg">
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Xác nhận xóa giao dịch</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Bạn có chắc chắn muốn xóa giao dịch này? Hành động này không thể hoàn tác.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Hủy</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete(transaction.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Xóa
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        )}
+
                       </div>
                     </div>
                   </Card>
@@ -277,6 +220,15 @@ export default function TransactionsPage() {
           </div>
         </Card>
       )}
+
+      {/* Transaction Detail Dialog */}
+      <TransactionDetailDialog
+        transaction={selectedTransaction}
+        open={showDetailDialog}
+        onOpenChange={setShowDetailDialog}
+        currentUserId={currentUserId}
+        onDeleted={loadTransactions}
+      />
     </div>
   );
 }

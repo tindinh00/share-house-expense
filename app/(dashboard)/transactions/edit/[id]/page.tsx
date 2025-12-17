@@ -8,8 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 interface Category {
   id: string;
@@ -43,6 +51,7 @@ export default function EditTransactionPage() {
   const [currentUserId, setCurrentUserId] = useState<string>('');
 
   // Form state
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [date, setDate] = useState('');
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
@@ -80,6 +89,7 @@ export default function EditTransactionPage() {
 
       setTransaction(transactionData);
       setDate(transactionData.date);
+      setSelectedDate(new Date(transactionData.date));
       setAmount(transactionData.amount.toString());
       setNote(transactionData.note);
       setCategoryId(transactionData.category_id);
@@ -115,7 +125,7 @@ export default function EditTransactionPage() {
       const { error } = await supabase
         .from('transactions')
         .update({
-          date,
+          date: format(selectedDate, 'yyyy-MM-dd'),
           amount: parseFloat(amount),
           note: note.trim(),
           category_id: categoryId,
@@ -184,14 +194,28 @@ export default function EditTransactionPage() {
           <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             {/* Date */}
             <div className="space-y-2">
-              <Label htmlFor="date">Ngày</Label>
-              <Input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
+              <Label>Ngày chi tiêu</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <span className="mr-2">📅</span>
+                    {format(selectedDate, 'EEEE, dd/MM/yyyy', { locale: vi })}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
+                    initialFocus
+                    locale={vi}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Amount */}

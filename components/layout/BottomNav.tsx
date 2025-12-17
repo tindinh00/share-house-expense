@@ -2,9 +2,35 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useRoom } from '@/contexts/RoomContext';
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { currentRoom } = useRoom();
+
+  // Generate color for room based on room type and ID
+  const getRoomColor = (roomId: string, roomType?: string) => {
+    // Private room (Ví cá nhân) always gets amber/yellow color
+    if (roomType === 'PRIVATE') {
+      return { 
+        text: 'text-amber-700'
+      };
+    }
+    
+    // Shared rooms get different colors
+    const colors = [
+      { text: 'text-blue-600' },
+      { text: 'text-purple-600' },
+      { text: 'text-pink-600' },
+      { text: 'text-emerald-600' },
+      { text: 'text-teal-600' },
+      { text: 'text-indigo-600' },
+    ];
+    
+    // Use room ID to consistently pick a color
+    const hash = roomId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
+  };
 
   const navItems = [
     { href: '/dashboard', icon: '📊', label: 'Tổng quan' },
@@ -34,12 +60,18 @@ export default function BottomNav() {
             );
           }
 
+          const roomColor = currentRoom ? getRoomColor(currentRoom.id, currentRoom.type) : null;
+          
           return (
             <Link
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition ${
-                isActive ? 'text-green-600' : 'text-gray-500'
+                isActive && roomColor
+                  ? roomColor.text
+                  : isActive
+                  ? 'text-green-600'
+                  : 'text-gray-500'
               }`}
             >
               <span className="text-xl">{item.icon}</span>

@@ -15,9 +15,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 interface Category {
   id: string;
@@ -32,6 +40,7 @@ export default function AddTransactionPage() {
   
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [formData, setFormData] = useState({
     amount: '',
     note: '',
@@ -103,7 +112,7 @@ export default function AddTransactionPage() {
       const { error } = await supabase.from('transactions').insert({
         amount,
         note: formData.note.trim(),
-        date: formData.date,
+        date: format(selectedDate, 'yyyy-MM-dd'),
         category_id: formData.category_id,
         room_id: currentRoom.id,
         paid_by: user.id,
@@ -218,15 +227,28 @@ export default function AddTransactionPage() {
 
             {/* Date */}
             <div className="space-y-2">
-              <Label htmlFor="date">Ngày chi tiêu *</Label>
-              <Input
-                id="date"
-                type="date"
-                value={formData.date}
-                max={new Date().toISOString().split('T')[0]}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                required
-              />
+              <Label>Ngày chi tiêu *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <span className="mr-2">📅</span>
+                    {format(selectedDate, 'EEEE, dd/MM/yyyy', { locale: vi })}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
+                    initialFocus
+                    locale={vi}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Submit */}
