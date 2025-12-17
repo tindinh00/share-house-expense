@@ -424,12 +424,17 @@ export default function ReportsPage() {
         dailyData[date] = { date };
       }
       
-      if (household) {
-        const householdName = household.households.name;
-        if (!dailyData[date][householdName]) {
-          dailyData[date][householdName] = 0;
+      if (household && household.households) {
+        const householdName = Array.isArray(household.households) 
+          ? household.households[0]?.name 
+          : (household.households as any).name;
+        
+        if (householdName) {
+          if (!dailyData[date][householdName]) {
+            dailyData[date][householdName] = 0;
+          }
+          dailyData[date][householdName] += parseFloat(t.amount);
         }
-        dailyData[date][householdName] += parseFloat(t.amount);
       }
     });
     
