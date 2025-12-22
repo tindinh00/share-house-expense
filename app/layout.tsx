@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { SplashScreen } from "@/components/splash-screen";
 
 const inter = Inter({ subsets: ["vietnamese", "latin"] });
 
@@ -39,7 +40,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <SplashScreen />
+        {children}
+      </body>
     </html>
   );
 }
