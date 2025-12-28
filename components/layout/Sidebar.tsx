@@ -22,9 +22,10 @@ import { Button } from '@/components/ui/button';
 const navigation = [
   { name: 'Tổng quan', href: '/dashboard', icon: '📊' },
   { name: 'Giao dịch', href: '/transactions', icon: '💰' },
+  { name: 'Hóa đơn tháng', href: '/bills', icon: '📅' },
+  { name: 'Báo cáo', href: '/reports', icon: '📈' },
   { name: 'Không gian', href: '/rooms', icon: '🏠' },
   { name: 'Hộ gia đình', href: '/households', icon: '👨‍👩‍👧‍👦' },
-  { name: 'Báo cáo', href: '/reports', icon: '📈' },
   { name: 'Cài đặt', href: '/settings', icon: '⚙️' },
 ];
 

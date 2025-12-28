@@ -36,8 +36,8 @@ export default function BottomNav() {
     { href: '/dashboard', icon: '📊', label: 'Tổng quan' },
     { href: '/transactions', icon: '💰', label: 'Giao dịch' },
     { href: '/transactions/add', icon: '➕', label: 'Thêm', isCenter: true },
+    { href: '/bills', icon: '📅', label: 'Hóa đơn' },
     { href: '/reports', icon: '📈', label: 'Báo cáo' },
-    { href: '/rooms', icon: '🏠', label: 'Phòng' },
   ];
 
   return (
