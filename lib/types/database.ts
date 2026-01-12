@@ -130,6 +130,9 @@ export interface Database {
           name: string
           icon: string
           color: string
+          created_by: string | null
+          room_id: string | null
+          is_system: boolean
           created_at: string
         }
         Insert: {
@@ -137,6 +140,9 @@ export interface Database {
           name: string
           icon: string
           color: string
+          created_by?: string | null
+          room_id?: string | null
+          is_system?: boolean
           created_at?: string
         }
         Update: {
@@ -144,6 +150,9 @@ export interface Database {
           name?: string
           icon?: string
           color?: string
+          created_by?: string | null
+          room_id?: string | null
+          is_system?: boolean
           created_at?: string
         }
       }

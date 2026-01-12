@@ -61,6 +61,9 @@ CREATE TABLE categories (
   name TEXT NOT NULL,
   icon TEXT NOT NULL,
   color TEXT NOT NULL,
+  created_by UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  room_id UUID REFERENCES rooms(id) ON DELETE CASCADE,
+  is_system BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
@@ -88,6 +91,9 @@ CREATE INDEX idx_room_members_room ON room_members(room_id);
 CREATE INDEX idx_household_members_user ON household_members(user_id);
 CREATE INDEX idx_household_members_household ON household_members(household_id);
 CREATE INDEX idx_rooms_created_by ON rooms(created_by);
+CREATE INDEX idx_categories_created_by ON categories(created_by);
+CREATE INDEX idx_categories_room_id ON categories(room_id);
+CREATE INDEX idx_categories_is_system ON categories(is_system);
 
 -- Row Level Security (RLS)
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -144,9 +150,48 @@ CREATE POLICY "Room creators can delete members"
   ));
 
 -- Categories policies
-CREATE POLICY "Everyone can view categories"
+CREATE POLICY "Users can view accessible categories"
   ON categories FOR SELECT
-  USING (true);
+  USING (
+    is_system = TRUE 
+    OR created_by = auth.uid()
+    OR room_id IN (
+      SELECT rm.room_id FROM room_members rm 
+      WHERE rm.user_id = auth.uid()
+    )
+    OR room_id IN (
+      SELECT rm.room_id FROM room_members rm
+      JOIN household_members hm ON rm.household_id = hm.household_id
+      WHERE hm.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can create personal categories"
+  ON categories FOR INSERT
+  WITH CHECK (
+    created_by = auth.uid() 
+    AND is_system = FALSE
+    AND (
+      room_id IS NULL 
+      OR room_id IN (
+        SELECT rm.room_id FROM room_members rm WHERE rm.user_id = auth.uid()
+      )
+      OR room_id IN (
+        SELECT rm.room_id FROM room_members rm
+        JOIN household_members hm ON rm.household_id = hm.household_id
+        WHERE hm.user_id = auth.uid()
+      )
+    )
+  );
+
+CREATE POLICY "Users can update own categories"
+  ON categories FOR UPDATE
+  USING (created_by = auth.uid() AND is_system = FALSE)
+  WITH CHECK (created_by = auth.uid() AND is_system = FALSE);
+
+CREATE POLICY "Users can delete own categories"
+  ON categories FOR DELETE
+  USING (created_by = auth.uid() AND is_system = FALSE);
 
 -- Transactions policies
 CREATE POLICY "Users can view transactions in their rooms"
@@ -179,14 +224,14 @@ CREATE POLICY "Users can delete own transactions"
   ON transactions FOR DELETE
   USING (created_by = auth.uid());
 
--- Insert default categories
-INSERT INTO categories (name, icon, color) VALUES
-  ('Điện nước', '⚡', '#3b82f6'),
-  ('Internet', '📡', '#8b5cf6'),
-  ('Ăn uống', '🍜', '#ef4444'),
-  ('Đồ dùng', '🛒', '#10b981'),
-  ('Sửa chữa', '🔧', '#f59e0b'),
-  ('Khác', '📝', '#6b7280');
+-- Insert default categories (system categories)
+INSERT INTO categories (name, icon, color, is_system) VALUES
+  ('Điện nước', '⚡', '#3b82f6', TRUE),
+  ('Internet', '📡', '#8b5cf6', TRUE),
+  ('Ăn uống', '🍜', '#ef4444', TRUE),
+  ('Đồ dùng', '🛒', '#10b981', TRUE),
+  ('Sửa chữa', '🔧', '#f59e0b', TRUE),
+  ('Khác', '📝', '#6b7280', TRUE);
 
 -- Function to create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()

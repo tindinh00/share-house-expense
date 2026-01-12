@@ -24,6 +24,9 @@ interface Category {
   name: string;
   icon: string;
   color: string;
+  is_system?: boolean;
+  created_by?: string | null;
+  room_id?: string | null;
 }
 
 interface Transaction {
@@ -94,13 +97,25 @@ export default function EditTransactionPage() {
       setNote(transactionData.note);
       setCategoryId(transactionData.category_id);
 
-      // Load categories
+      // Load categories với logic mới
       const { data: categoriesData } = await supabase
         .from('categories')
         .select('*')
+        .order('is_system', { ascending: false })
         .order('name');
 
-      setCategories(categoriesData || []);
+      // Filter categories theo logic:
+      // - System categories (is_system = true)
+      // - Personal categories (created_by = user.id, room_id = null)
+      // - Room categories (room_id = transaction.room_id)
+      const filtered = (categoriesData || []).filter(cat => {
+        if (cat.is_system) return true;
+        if (cat.created_by === user.id && !cat.room_id) return true;
+        if (cat.room_id === transactionData.room_id) return true;
+        return false;
+      });
+
+      setCategories(filtered);
     } catch (error: any) {
       console.error('Error:', error);
       toast.error('❌ Không thể tải giao dịch');

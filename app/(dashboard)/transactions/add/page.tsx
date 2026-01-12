@@ -31,6 +31,9 @@ interface Category {
   id: string;
   name: string;
   icon: string;
+  is_system?: boolean;
+  created_by?: string | null;
+  room_id?: string | null;
 }
 
 export default function AddTransactionPage() {
@@ -50,19 +53,37 @@ export default function AddTransactionPage() {
 
   useEffect(() => {
     loadCategories();
-  }, []);
+  }, [currentRoom]);
 
   const loadCategories = async () => {
-    const { data } = await supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Load categories: system + personal + room (nếu có)
+    let query = supabase
       .from('categories')
       .select('*')
+      .order('is_system', { ascending: false })
       .order('name');
+
+    const { data } = await query;
     
     if (data) {
-      setCategories(data);
+      // Filter categories theo logic:
+      // - System categories (is_system = true)
+      // - Personal categories (created_by = user.id, room_id = null)
+      // - Room categories (room_id = currentRoom.id) nếu đang ở room SHARED
+      const filtered = data.filter(cat => {
+        if (cat.is_system) return true;
+        if (cat.created_by === user.id && !cat.room_id) return true;
+        if (currentRoom && cat.room_id === currentRoom.id) return true;
+        return false;
+      });
+
+      setCategories(filtered);
       // Set default category
-      if (data.length > 0 && !formData.category_id) {
-        setFormData(prev => ({ ...prev, category_id: data[0].id }));
+      if (filtered.length > 0 && !formData.category_id) {
+        setFormData(prev => ({ ...prev, category_id: filtered[0].id }));
       }
     }
   };
