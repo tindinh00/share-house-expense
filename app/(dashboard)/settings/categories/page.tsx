@@ -367,14 +367,16 @@ export default function CategoriesPage() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingCategory ? 'Chỉnh sửa danh mục' : 'Tạo danh mục mới'}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="p-0 max-h-[90vh]">
+          <div className="flex-shrink-0 p-6 pb-4 border-b">
+            <DialogHeader>
+              <DialogTitle>
+                {editingCategory ? 'Chỉnh sửa danh mục' : 'Tạo danh mục mới'}
+              </DialogTitle>
+            </DialogHeader>
+          </div>
 
-          <div className="space-y-4 py-4">
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
             {/* Name */}
             <div className="space-y-2">
               <Label>Tên danh mục *</Label>
@@ -390,31 +392,31 @@ export default function CategoriesPage() {
             {!editingCategory && currentRoom?.type === 'SHARED' && (
               <div className="space-y-2">
                 <Label>Phạm vi</Label>
-                <div className="flex gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, scope: 'personal' })}
-                    className={`flex-1 p-3 rounded-lg border-2 transition ${
+                    className={`p-3 rounded-lg border-2 transition text-center ${
                       formData.scope === 'personal'
                         ? 'border-green-500 bg-green-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <span className="text-xl">👤</span>
-                    <p className="font-medium mt-1">Cá nhân</p>
+                    <span className="text-xl block">👤</span>
+                    <p className="font-medium mt-1 text-sm">Cá nhân</p>
                     <p className="text-xs text-gray-500">Chỉ bạn thấy</p>
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, scope: 'room' })}
-                    className={`flex-1 p-3 rounded-lg border-2 transition ${
+                    className={`p-3 rounded-lg border-2 transition text-center ${
                       formData.scope === 'room'
                         ? 'border-green-500 bg-green-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <span className="text-xl">🏠</span>
-                    <p className="font-medium mt-1">Không gian</p>
+                    <span className="text-xl block">🏠</span>
+                    <p className="font-medium mt-1 text-sm">Không gian</p>
                     <p className="text-xs text-gray-500">Mọi người thấy</p>
                   </button>
                 </div>
@@ -424,13 +426,13 @@ export default function CategoriesPage() {
             {/* Icon */}
             <div className="space-y-2">
               <Label>Biểu tượng</Label>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-6 gap-2">
                 {EMOJI_OPTIONS.map((emoji) => (
                   <button
                     key={emoji}
                     type="button"
                     onClick={() => setFormData({ ...formData, icon: emoji })}
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${
+                    className={`aspect-square rounded-lg flex items-center justify-center text-xl transition ${
                       formData.icon === emoji
                         ? 'bg-green-100 ring-2 ring-green-500'
                         : 'bg-gray-100 hover:bg-gray-200'
@@ -445,13 +447,13 @@ export default function CategoriesPage() {
             {/* Color */}
             <div className="space-y-2">
               <Label>Màu sắc</Label>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-8 gap-2">
                 {COLOR_OPTIONS.map((color) => (
                   <button
                     key={color}
                     type="button"
                     onClick={() => setFormData({ ...formData, color })}
-                    className={`w-8 h-8 rounded-full transition ${
+                    className={`aspect-square rounded-full transition ${
                       formData.color === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''
                     }`}
                     style={{ backgroundColor: color }}
@@ -465,26 +467,28 @@ export default function CategoriesPage() {
               <Label>Xem trước</Label>
               <div className="flex items-center gap-3 p-3 rounded-lg border border-gray-200">
                 <div
-                  className="w-12 h-12 rounded-lg flex items-center justify-center"
+                  className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: formData.color + '20' }}
                 >
                   <span className="text-2xl">{formData.icon}</span>
                 </div>
-                <span className="font-medium text-gray-900">
+                <span className="font-medium text-gray-900 truncate">
                   {formData.name || 'Tên danh mục'}
                 </span>
               </div>
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Hủy
-            </Button>
-            <Button onClick={handleSubmit} disabled={submitting || !formData.name.trim()}>
-              {submitting ? 'Đang lưu...' : editingCategory ? 'Cập nhật' : 'Tạo mới'}
-            </Button>
-          </DialogFooter>
+          <div className="flex-shrink-0 border-t p-4 bg-white">
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Hủy
+              </Button>
+              <Button onClick={handleSubmit} disabled={submitting || !formData.name.trim()}>
+                {submitting ? 'Đang lưu...' : editingCategory ? 'Cập nhật' : 'Tạo mới'}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
