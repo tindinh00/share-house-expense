@@ -249,7 +249,7 @@ export default function EditTransactionPage() {
             {/* Category */}
             <div className="space-y-2">
               <Label>Danh mục</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-64 overflow-y-auto p-1">
                 {categories.map((category) => (
                   <button
                     key={category.id}

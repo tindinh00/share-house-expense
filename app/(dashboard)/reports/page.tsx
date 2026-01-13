@@ -976,50 +976,52 @@ export default function ReportsPage() {
 
       {/* User/Household Summary with Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* Daily Spending Chart for Households */}
-        {currentRoom.split_by === 'HOUSEHOLD' && dailySpending.length > 0 ? (
+        {/* Horizontal Bar Chart for Households */}
+        {currentRoom.split_by === 'HOUSEHOLD' && householdSpending.length > 0 ? (
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base md:text-lg">
-                Chi tiêu theo ngày
+                So sánh chi tiêu các hộ
               </CardTitle>
               <p className="text-xs md:text-sm text-gray-500 mt-1">
-                Theo dõi chi tiêu hàng ngày của các hộ
+                Tổng chi tiêu của mỗi hộ trong kỳ
               </p>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart
-                  data={dailySpending}
-                  margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+              <ResponsiveContainer width="100%" height={Math.max(150, householdSpending.length * 60)}>
+                <BarChart
+                  data={householdSpending}
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                   <XAxis 
-                    dataKey="date"
-                    tickFormatter={(date) => format(new Date(date), 'dd/MM', { locale: vi })}
+                    type="number"
+                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
                     tick={{ fontSize: 11 }}
                   />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip 
-                    labelFormatter={(date) => format(new Date(date), 'dd/MM/yyyy', { locale: vi })}
-                    formatter={(value: any) => `${Number(value).toLocaleString('vi-VN')} ₫`}
+                  <YAxis 
+                    type="category"
+                    dataKey="household_name"
+                    tick={{ fontSize: 12 }}
+                    width={100}
                   />
-                  <Legend wrapperStyle={{ fontSize: '11px' }} />
-                  {householdSpending.map((household, index) => {
-                    const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-                    return (
-                      <Line
-                        key={household.household_id}
-                        type="monotone"
-                        dataKey={household.household_name}
-                        stroke={colors[index % colors.length]}
-                        strokeWidth={2}
-                        dot={{ r: 4 }}
-                        name={household.household_name}
-                      />
-                    );
-                  })}
-                </LineChart>
+                  <Tooltip 
+                    formatter={(value: any) => [`${Number(value).toLocaleString('vi-VN')} ₫`, 'Chi tiêu']}
+                    labelFormatter={(label) => `🏠 ${label}`}
+                  />
+                  <Bar 
+                    dataKey="total" 
+                    fill="#10b981" 
+                    radius={[0, 4, 4, 0]}
+                    name="Chi tiêu"
+                  >
+                    {householdSpending.map((entry, index) => {
+                      const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+                      return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                    })}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>

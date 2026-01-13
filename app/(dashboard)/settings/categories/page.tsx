@@ -237,38 +237,55 @@ export default function CategoriesPage() {
       </div>
 
 
-      {/* System Categories */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            🏷️ Danh mục hệ thống
-            <span className="text-sm font-normal text-gray-500">({systemCategories.length})</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {systemCategories.map((cat) => (
-              <div
-                key={cat.id}
-                className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50"
-              >
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: cat.color + '20' }}
-                >
-                  <span className="text-xl">{cat.icon}</span>
-                </div>
-                <span className="font-medium text-gray-700 truncate">{cat.name}</span>
+      {/* Room Categories - Đầu tiên */}
+      {currentRoom && currentRoom.type === 'SHARED' && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              🏠 Danh mục của "{currentRoom.name}"
+              <span className="text-sm font-normal text-gray-500">({roomCategories.length})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {roomCategories.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>Chưa có danh mục riêng cho không gian này</p>
               </div>
-            ))}
-          </div>
-          <p className="text-xs text-gray-500 mt-3">
-            * Danh mục hệ thống không thể chỉnh sửa hoặc xóa
-          </p>
-        </CardContent>
-      </Card>
+            ) : (
+              <div className="space-y-2">
+                {roomCategories.map((cat) => (
+                  <div
+                    key={cat.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: cat.color + '20' }}
+                      >
+                        <span className="text-xl">{cat.icon}</span>
+                      </div>
+                      <span className="font-medium text-gray-900">{cat.name}</span>
+                    </div>
+                    {cat.created_by === currentUserId && (
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(cat)}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(cat)}>
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Personal Categories */}
+      {/* Personal Categories - Thứ hai */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
@@ -316,53 +333,36 @@ export default function CategoriesPage() {
         </CardContent>
       </Card>
 
-      {/* Room Categories */}
-      {currentRoom && currentRoom.type === 'SHARED' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              🏠 Danh mục của "{currentRoom.name}"
-              <span className="text-sm font-normal text-gray-500">({roomCategories.length})</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {roomCategories.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p>Chưa có danh mục riêng cho không gian này</p>
+      {/* System Categories - Cuối cùng */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            🏷️ Danh mục hệ thống
+            <span className="text-sm font-normal text-gray-500">({systemCategories.length})</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {systemCategories.map((cat) => (
+              <div
+                key={cat.id}
+                className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50"
+              >
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: cat.color + '20' }}
+                >
+                  <span className="text-xl">{cat.icon}</span>
+                </div>
+                <span className="font-medium text-gray-700 truncate">{cat.name}</span>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {roomCategories.map((cat) => (
-                  <div
-                    key={cat.id}
-                    className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: cat.color + '20' }}
-                      >
-                        <span className="text-xl">{cat.icon}</span>
-                      </div>
-                      <span className="font-medium text-gray-900">{cat.name}</span>
-                    </div>
-                    {cat.created_by === currentUserId && (
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(cat)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(cat)}>
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 mt-3">
+            * Danh mục hệ thống không thể chỉnh sửa hoặc xóa
+          </p>
+        </CardContent>
+      </Card>
 
 
       {/* Create/Edit Dialog */}

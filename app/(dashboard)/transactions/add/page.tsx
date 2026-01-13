@@ -230,10 +230,14 @@ export default function AddTransactionPage() {
                 onValueChange={(value) => setFormData({ ...formData, category_id: value })}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Chọn danh mục" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent 
+                  position="popper" 
+                  side="bottom"
+                  className="max-h-60 overflow-y-auto"
+                >
                   {categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       <div className="flex items-center gap-2">
