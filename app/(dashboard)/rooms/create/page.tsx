@@ -73,7 +73,7 @@ export default function CreateRoomPage() {
 
       if (memberError) throw memberError;
 
-      toast.success('✅ Đã tạo không gian mới!');
+      toast.success('Đã tạo không gian mới!');
       
       // Refresh rooms list
       await refreshRooms();

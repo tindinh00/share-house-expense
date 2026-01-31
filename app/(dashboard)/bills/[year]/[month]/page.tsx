@@ -153,13 +153,13 @@ export default function MonthDetailPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <p className="text-sm text-gray-600 mb-1">Tổng chi tiêu</p>
-              <p className="text-2xl md:text-3xl font-bold text-green-600">
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold text-green-600 break-words">
                 {totalAmount.toLocaleString('vi-VN')} ₫
               </p>
             </div>
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-gray-600 mb-1">Số giao dịch</p>
-              <p className="text-2xl md:text-3xl font-bold text-blue-600">
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">
                 {transactions.length}
               </p>
             </div>
@@ -201,7 +201,7 @@ export default function MonthDetailPage() {
                         {Number(transaction.amount).toLocaleString('vi-VN')} ₫
                       </p>
                     </div>
-                    <p className="text-sm text-gray-500 line-clamp-2 mb-1">
+                    <p className="text-sm text-gray-500 line-clamp-2 mb-1 break-all">
                       {transaction.note}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-gray-400">

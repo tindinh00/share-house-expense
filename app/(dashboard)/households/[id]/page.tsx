@@ -125,7 +125,7 @@ export default function HouseholdDetailPage() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã cập nhật tên');
+      toast.success('Đã cập nhật tên');
       loadHouseholdDetails();
     } catch (error: any) {
       console.error('Error:', error);
@@ -175,7 +175,7 @@ export default function HouseholdDetailPage() {
 
       if (memberError) throw memberError;
 
-      toast.success('✅ Đã mời thành công!');
+      toast.success('Đã mời thành công!');
       setInviteEmail('');
       loadHouseholdDetails();
     } catch (error: any) {
@@ -200,7 +200,7 @@ export default function HouseholdDetailPage() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã xóa thành viên');
+      toast.success('Đã xóa thành viên');
       loadHouseholdDetails();
     } catch (error: any) {
       console.error('Error:', error);
@@ -217,7 +217,7 @@ export default function HouseholdDetailPage() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã xóa hộ gia đình');
+      toast.success('Đã xóa hộ gia đình');
       router.push('/households');
     } catch (error: any) {
       console.error('Error:', error);

@@ -771,7 +771,7 @@ export default function ReportsPage() {
                         </p>
                         <p className={`mt-1 font-bold ${household.total >= (totalExpense / householdSpending.length) ? 'text-green-700' : 'text-red-700'}`}>
                           {household.total >= (totalExpense / householdSpending.length) 
-                            ? `✅ Đã trả đủ (thừa ${(household.total - (totalExpense / householdSpending.length)).toLocaleString('vi-VN')} ₫)`
+                            ? `Đã trả đủ (thừa ${(household.total - (totalExpense / householdSpending.length)).toLocaleString('vi-VN')} ₫)`
                             : `⚠️ Còn thiếu ${((totalExpense / householdSpending.length) - household.total).toLocaleString('vi-VN')} ₫`
                           }
                         </p>

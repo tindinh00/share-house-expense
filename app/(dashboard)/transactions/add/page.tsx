@@ -142,7 +142,7 @@ export default function AddTransactionPage() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã thêm giao dịch!');
+      toast.success('Đã thêm giao dịch!');
       router.push('/transactions');
       router.refresh();
     } catch (error: any) {

@@ -106,6 +106,7 @@ app/(auth)/
 ```
 
 **Features**:
+
 - Email Magic Link
 - Google OAuth (optional)
 - Profile creation
@@ -121,6 +122,7 @@ app/(dashboard)/
 ```
 
 **Features**:
+
 - Room selector dropdown
 - Monthly summary
 - Quick stats (total spent, balance)
@@ -135,6 +137,7 @@ app/(dashboard)/transactions/
 ```
 
 **Components**:
+
 ```
 components/features/
 ├── TransactionCard.tsx         # List item
@@ -144,6 +147,7 @@ components/features/
 ```
 
 **Features**:
+
 - List with pagination
 - Add new transaction
 - Edit/delete
@@ -160,6 +164,7 @@ app/(dashboard)/rooms/
 ```
 
 **Features**:
+
 - Create room (SHARED/PRIVATE)
 - Invite members (Phase 2)
 - Edit room settings
@@ -173,6 +178,7 @@ app/(dashboard)/reports/
 ```
 
 **Features**:
+
 - Month selector
 - Total spent by category
 - Who paid what
@@ -187,6 +193,7 @@ app/(dashboard)/settings/
 ```
 
 **Features**:
+
 - Edit profile
 - Change avatar
 - Logout
@@ -213,6 +220,7 @@ app/(dashboard)/transactions/
 ```
 
 **Features**:
+
 - Upload receipt photo
 - Supabase Storage integration
 - Image preview
@@ -227,6 +235,7 @@ app/(dashboard)/recurring/
 ```
 
 **Features**:
+
 - Create template (monthly bills)
 - Auto-create transactions
 - Edit/pause recurring
@@ -239,6 +248,7 @@ lib/supabase/
 ```
 
 **Features**:
+
 - Live updates when others add transactions
 - Toast notifications
 - Optimistic UI updates
@@ -252,6 +262,7 @@ lib/
 ```
 
 **Features**:
+
 - Cache transactions locally
 - Queue actions when offline
 - Sync when back online
@@ -290,9 +301,9 @@ lib/
 
 ```typescript
 // PascalCase for components
-TransactionCard.tsx
-AddTransactionForm.tsx
-RoomSelector.tsx
+TransactionCard.tsx;
+AddTransactionForm.tsx;
+RoomSelector.tsx;
 ```
 
 ### Pages (App Router)
@@ -308,18 +319,18 @@ app/api/transactions/route.ts  → /api/transactions
 
 ```typescript
 // camelCase for utilities
-formatCurrency.ts
-calculateSettlement.ts
-validateTransaction.ts
+formatCurrency.ts;
+calculateSettlement.ts;
+validateTransaction.ts;
 ```
 
 ### Types
 
 ```typescript
 // PascalCase for types
-Database.ts
-Transaction.ts
-Room.ts
+Database.ts;
+Transaction.ts;
+Room.ts;
 ```
 
 ## Component Patterns
@@ -333,7 +344,7 @@ import { createClient } from '@/lib/supabase/server';
 export default async function TransactionsPage() {
   const supabase = await createClient();
   const { data } = await supabase.from('transactions').select('*');
-  
+
   return <TransactionList transactions={data} />;
 }
 ```
@@ -348,7 +359,7 @@ import { useState } from 'react';
 
 export function AddTransactionForm() {
   const [amount, setAmount] = useState('');
-  
+
   return (
     <form>
       <input value={amount} onChange={(e) => setAmount(e.target.value)} />
@@ -370,7 +381,7 @@ export async function createTransaction(formData: FormData) {
   const { data, error } = await supabase
     .from('transactions')
     .insert({ ... });
-  
+
   if (error) throw error;
   return data;
 }
@@ -382,7 +393,7 @@ export async function createTransaction(formData: FormData) {
 
 ```typescript
 // Direct DB call, no API route needed
-const { data } = await supabase.from('transactions').select('*');
+const { data } = await supabase.from("transactions").select("*");
 ```
 
 ### 2. Client Component + Server Action

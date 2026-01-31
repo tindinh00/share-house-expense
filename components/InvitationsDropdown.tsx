@@ -203,7 +203,7 @@ export function InvitationsDropdown() {
 
       if (inviteError) throw inviteError;
 
-      toast.success('✅ Đã tham gia hộ gia đình!');
+      toast.success('Đã tham gia hộ gia đình!');
       loadInvitations();
     } catch (error: any) {
       console.error('Error:', error);
@@ -223,7 +223,7 @@ export function InvitationsDropdown() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã từ chối lời mời');
+      toast.success('Đã từ chối lời mời');
       loadInvitations();
     } catch (error: any) {
       console.error('Error:', error);
@@ -244,7 +244,7 @@ export function InvitationsDropdown() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã tham gia không gian!');
+      toast.success('Đã tham gia không gian!');
       loadInvitations();
     } catch (error: any) {
       console.error('Error:', error);
@@ -264,7 +264,7 @@ export function InvitationsDropdown() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã từ chối lời mời');
+      toast.success('Đã từ chối lời mời');
       loadInvitations();
     } catch (error: any) {
       console.error('Error:', error);

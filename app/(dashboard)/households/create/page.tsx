@@ -54,7 +54,7 @@ export default function CreateHouseholdPage() {
 
       if (memberError) throw memberError;
 
-      toast.success('✅ Đã tạo hộ gia đình!');
+      toast.success('Đã tạo hộ gia đình!');
       router.push(`/households/${household.id}`);
     } catch (error: any) {
       console.error('Error:', error);

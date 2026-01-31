@@ -60,7 +60,7 @@ export default function RoomsPage() {
 
   const handleSetActive = (room: any) => {
     setCurrentRoom(room);
-    toast.success(`✅ Đã chuyển sang ${room.name}`);
+    toast.success(`Đã chuyển sang ${room.name}`);
   };
 
   if (loading) {

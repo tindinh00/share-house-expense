@@ -256,7 +256,7 @@ export default function RoomDetailPage() {
 
       if (inviteError) throw inviteError;
 
-      toast.success('✅ Đã gửi lời mời!');
+      toast.success('Đã gửi lời mời!');
       setInviteEmail('');
       loadRoomDetails();
     } catch (error: any) {
@@ -313,7 +313,7 @@ export default function RoomDetailPage() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã gửi lời mời!');
+      toast.success('Đã gửi lời mời!');
       setSelectedHouseholdId('');
       loadRoomDetails();
     } catch (error: any) {
@@ -333,7 +333,7 @@ export default function RoomDetailPage() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã xóa hộ gia đình');
+      toast.success('Đã xóa hộ gia đình');
       loadRoomDetails();
     } catch (error: any) {
       console.error('Error:', error);
@@ -355,7 +355,7 @@ export default function RoomDetailPage() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã xóa thành viên');
+      toast.success('Đã xóa thành viên');
       loadRoomDetails();
     } catch (error: any) {
       console.error('Error:', error);
@@ -378,7 +378,7 @@ export default function RoomDetailPage() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã cập nhật tên');
+      toast.success('Đã cập nhật tên');
       await refreshRooms();
       loadRoomDetails();
     } catch (error: any) {
@@ -398,7 +398,7 @@ export default function RoomDetailPage() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã xóa không gian');
+      toast.success('Đã xóa không gian');
       await refreshRooms();
       router.push('/rooms');
     } catch (error: any) {
@@ -410,7 +410,7 @@ export default function RoomDetailPage() {
   const handleSetActive = () => {
     if (room) {
       setCurrentRoom(room);
-      toast.success(`✅ Đã chuyển sang ${room.name}`);
+      toast.success(`Đã chuyển sang ${room.name}`);
     }
   };
 
@@ -471,7 +471,7 @@ export default function RoomDetailPage() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã cập nhật tên hộ gia đình');
+      toast.success('Đã cập nhật tên hộ gia đình');
       loadRoomDetails();
       if (selectedHousehold) {
         const updated = { ...selectedHousehold, households: { name: editHouseholdName.trim() } };
@@ -551,7 +551,7 @@ export default function RoomDetailPage() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã gửi lời mời!');
+      toast.success('Đã gửi lời mời!');
       setAddMemberEmail('');
     } catch (error: any) {
       console.error('Error:', error);
@@ -579,7 +579,7 @@ export default function RoomDetailPage() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã xóa thành viên');
+      toast.success('Đã xóa thành viên');
       loadRoomDetails();
       loadHouseholdDetails(selectedHousehold);
     } catch (error: any) {

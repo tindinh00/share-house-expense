@@ -149,7 +149,7 @@ export default function EditTransactionPage() {
 
       if (error) throw error;
 
-      toast.success('✅ Đã cập nhật giao dịch!');
+      toast.success('Đã cập nhật giao dịch!');
       router.push('/transactions');
     } catch (error: any) {
       console.error('Error:', error);
