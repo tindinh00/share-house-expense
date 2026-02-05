@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { useRoom } from '@/contexts/RoomContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { useCallback } from 'react';
 
 interface Category {
   id: string;
@@ -45,13 +45,11 @@ export default function EditTransactionPage() {
   const params = useParams();
   const transactionId = params.id as string;
   const supabase = createClient();
-  const { currentRoom } = useRoom();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [transaction, setTransaction] = useState<Transaction | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string>('');
 
   // Form state
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -60,11 +58,7 @@ export default function EditTransactionPage() {
   const [note, setNote] = useState('');
   const [categoryId, setCategoryId] = useState('');
 
-  useEffect(() => {
-    loadData();
-  }, [transactionId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -72,7 +66,6 @@ export default function EditTransactionPage() {
         router.push('/login');
         return;
       }
-      setCurrentUserId(user.id);
 
       // Load transaction
       const { data: transactionData, error: transactionError } = await supabase
@@ -116,14 +109,18 @@ export default function EditTransactionPage() {
       });
 
       setCategories(filtered);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error:', error);
       toast.error('❌ Không thể tải giao dịch');
       router.push('/transactions');
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase, transactionId, router]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,9 +148,10 @@ export default function EditTransactionPage() {
 
       toast.success('Đã cập nhật giao dịch!');
       router.push('/transactions');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error:', error);
-      toast.error('❌ Lỗi: ' + error.message);
+      const message = error instanceof Error ? error.message : 'Có lỗi xảy ra';
+      toast.error('❌ Lỗi: ' + message);
     } finally {
       setSubmitting(false);
     }
@@ -182,30 +180,30 @@ export default function EditTransactionPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 overflow-hidden pb-8 w-full px-2 sm:px-0">
       {/* Header */}
-      <div>
+      <div className="px-1">
         <Button
           variant="ghost"
           onClick={() => router.back()}
-          className="mb-4"
+          className="mb-4 -ml-2"
         >
           ← Quay lại
         </Button>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 truncate">
           Sửa giao dịch
         </h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-gray-600 mt-1 truncate">
           Cập nhật thông tin giao dịch
         </p>
       </div>
 
       {/* Form */}
-      <Card>
-        <CardHeader>
+      <Card className="overflow-hidden w-full">
+        <CardHeader className="px-4 md:px-6">
           <CardTitle>Thông tin giao dịch</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 md:px-6 pb-6">
           <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             {/* Date */}
             <div className="space-y-2">
@@ -214,7 +212,7 @@ export default function EditTransactionPage() {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-start text-left font-normal"
+                    className="w-full justify-start text-left font-normal h-12"
                   >
                     <span className="mr-2">📅</span>
                     {format(selectedDate, 'EEEE, dd/MM/yyyy', { locale: vi })}
@@ -243,26 +241,27 @@ export default function EditTransactionPage() {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required
+                className="h-12 text-lg font-medium"
               />
             </div>
 
             {/* Category */}
             <div className="space-y-2">
               <Label>Danh mục</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-64 overflow-y-auto p-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 max-h-72 overflow-y-auto p-1">
                 {categories.map((category) => (
                   <button
                     key={category.id}
                     type="button"
                     onClick={() => setCategoryId(category.id)}
-                    className={`p-4 border-2 rounded-lg transition flex flex-col items-center gap-2 ${
+                    className={`p-3 sm:p-4 border-2 rounded-xl transition flex flex-col items-center gap-1 sm:gap-2 ${
                       categoryId === category.id
-                        ? 'border-green-600 bg-green-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-green-600 bg-green-50 shadow-sm'
+                        : 'border-gray-100 hover:border-gray-300'
                     }`}
                   >
-                    <span className="text-3xl">{category.icon}</span>
-                    <span className="text-sm font-medium">{category.name}</span>
+                    <span className="text-2xl sm:text-3xl">{category.icon}</span>
+                    <span className="text-xs sm:text-sm font-medium truncate w-full text-center">{category.name}</span>
                   </button>
                 ))}
               </div>

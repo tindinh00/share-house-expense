@@ -740,7 +740,7 @@ export default function RoomDetailPage() {
                   </DialogHeader>
                   
                   {room.split_by === 'HOUSEHOLD' ? (
-                    <div className="space-y-4">
+                    <div className="space-y-4 pt-3">
                       <div className="space-y-2">
                         <Label>Chọn hộ gia đình</Label>
                         <Select
@@ -771,13 +771,13 @@ export default function RoomDetailPage() {
                         <DialogTrigger asChild>
                           <Button variant="outline">Hủy</Button>
                         </DialogTrigger>
-                        <Button onClick={handleInviteHousehold} disabled={inviting}>
+                        <Button onClick={handleInviteHousehold} disabled={inviting} className="bg-green-600 hover:bg-green-700">
                           {inviting ? 'Đang gửi...' : 'Gửi lời mời'}
                         </Button>
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-4 pt-3">
                       <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
                         <Input
@@ -792,7 +792,7 @@ export default function RoomDetailPage() {
                         <DialogTrigger asChild>
                           <Button variant="outline">Hủy</Button>
                         </DialogTrigger>
-                        <Button onClick={handleInvite} disabled={inviting}>
+                        <Button onClick={handleInvite} disabled={inviting} className="bg-green-600 hover:bg-green-700">
                           {inviting ? 'Đang gửi...' : 'Gửi lời mời'}
                         </Button>
                       </div>

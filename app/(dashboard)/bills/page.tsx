@@ -1,9 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRoom } from '@/contexts/RoomContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { 
+  Calendar, 
+  TrendingUp, 
+  CreditCard, 
+  Wallet,
+  ArrowRight,
+  Sparkles,
+  ArrowUpRight
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import Link from 'next/link';
@@ -15,25 +25,32 @@ interface MonthSummary {
   transactionCount: number;
 }
 
+interface SupabaseTransactionSummary {
+  date: string;
+  amount: string;
+}
+
 export default function BillsPage() {
   const supabase = createClient();
-  const { currentRoom } = useRoom();
+  const { currentRoom, loading: roomLoading } = useRoom();
   const [months, setMonths] = useState<MonthSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFirstLoadComplete, setIsFirstLoadComplete] = useState(false);
 
-  useEffect(() => {
-    if (currentRoom) {
-      loadMonthsSummary();
+  const loadMonthsSummary = useCallback(async () => {
+    if (!currentRoom) {
+      setMonths([]);
+      setLoading(false);
+      setIsFirstLoadComplete(true);
+      return;
     }
-  }, [currentRoom]);
-
-  const loadMonthsSummary = async () => {
-    if (!currentRoom) return;
     
-    setLoading(true);
+    if (!isFirstLoadComplete) {
+      setLoading(true);
+    }
+
     try {
-      // Lấy tất cả transactions của room
-      const { data: transactions, error } = await supabase
+      const { data, error } = await supabase
         .from('transactions')
         .select('date, amount')
         .eq('room_id', currentRoom.id)
@@ -42,10 +59,10 @@ export default function BillsPage() {
 
       if (error) throw error;
 
-      // Group theo tháng
+      const transactions = (data as unknown as SupabaseTransactionSummary[]) || [];
       const monthsMap = new Map<string, MonthSummary>();
       
-      (transactions || []).forEach((t) => {
+      transactions.forEach((t) => {
         const date = new Date(t.date);
         const year = date.getFullYear();
         const month = date.getMonth() + 1;
@@ -61,113 +78,232 @@ export default function BillsPage() {
         }
 
         const summary = monthsMap.get(key)!;
-        summary.totalAmount += Number(t.amount);
+        summary.totalAmount += parseFloat(t.amount);
         summary.transactionCount += 1;
       });
 
-      // Convert to array và sort
       const monthsArray = Array.from(monthsMap.values()).sort((a, b) => {
         if (a.year !== b.year) return b.year - a.year;
         return b.month - a.month;
       });
 
       setMonths(monthsArray);
+      setLoading(false);
+      setIsFirstLoadComplete(true);
     } catch (error) {
       console.error('Error loading months:', error);
-    } finally {
       setLoading(false);
+      setIsFirstLoadComplete(true);
     }
-  };
+  }, [supabase, currentRoom, isFirstLoadComplete]);
 
-  const getMonthName = (month: number) => {
+  useEffect(() => {
+    if (currentRoom) {
+      loadMonthsSummary();
+    } else if (!roomLoading) {
+      setMonths([]);
+      setLoading(false);
+      setIsFirstLoadComplete(true);
+    }
+  }, [currentRoom, roomLoading, loadMonthsSummary]);
+
+  const stats = useMemo(() => {
+    const totalSpent = months.reduce((sum, m) => sum + m.totalAmount, 0);
+    const avgMonthly = months.length > 0 ? Math.round(totalSpent / months.length) : 0;
+    const peakMonth = months.reduce((prev, curr) => (curr.totalAmount > prev.totalAmount ? curr : prev), months[0] || { totalAmount: 0 });
+    
+    return {
+      totalSpent,
+      avgMonthly,
+      peakMonth: peakMonth.totalAmount,
+    };
+  }, [months]);
+
+  const getMonthLabel = (month: number) => {
     const date = new Date(2000, month - 1, 1);
     return format(date, 'MMMM', { locale: vi });
   };
 
-  if (!currentRoom) {
+  if (roomLoading && !isFirstLoadComplete) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-600">Vui lòng chọn không gian để xem chi tiêu theo tháng</p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Đang tải...</p>
+      <div className="space-y-6">
+        <div className="h-12 w-48 bg-gray-200 rounded-lg animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-24 bg-white rounded-2xl border border-gray-100 animate-pulse" />
+          ))}
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 bg-white rounded-2xl border border-gray-100 animate-pulse" />
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 md:space-y-6 pb-20 md:pb-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
-          📅 Chi tiêu theo tháng
-        </h1>
-        <p className="text-sm md:text-base text-gray-600 mt-1">
-          Không gian: {currentRoom.name}
-        </p>
+    <div className="space-y-6 pb-24 md:pb-8">
+      {/* Header Area */}
+      <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+            Chi tiêu tháng
+          </h1>
+          <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-wider">
+            {currentRoom?.name || 'Chưa chọn không gian'} • {months.length} tháng hoạt động
+          </p>
+        </div>
       </div>
 
-      {/* Months List */}
-      {months.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <span className="text-6xl">📋</span>
-            <p className="text-muted-foreground mt-4 mb-6">
-              Chưa có giao dịch nào
-            </p>
-            <p className="text-sm text-gray-500">
-              Thêm giao dịch để xem chi tiêu theo tháng
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4">
-          {months.map((monthData) => (
-            <Link 
-              key={`${monthData.year}-${monthData.month}`}
-              href={`/bills/${monthData.year}/${monthData.month}`}
-            >
-              <Card className="hover:shadow-lg transition cursor-pointer hover:border-green-200">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg md:text-xl">
-                        Tháng {monthData.month}/{monthData.year}
-                      </CardTitle>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {getMonthName(monthData.month)} {monthData.year}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-600">Tổng chi tiêu</p>
-                      <p className="text-xl md:text-2xl font-bold text-green-600">
-                        {monthData.totalAmount.toLocaleString('vi-VN')} ₫
-                      </p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">
-                      {monthData.transactionCount} giao dịch
-                    </span>
-                    <span className="text-green-600 font-medium">
-                      Xem chi tiết →
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+      {!currentRoom ? (
+        <div className="text-center py-20 animate-in fade-in zoom-in-95 duration-700">
+          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Calendar className="w-10 h-10 text-gray-300" />
+          </div>
+          <p className="text-gray-500 font-bold mb-4">Chọn không gian để xem chi tiêu định kỳ</p>
+          <Button 
+            variant="outline" 
+            asChild
+            className="rounded-xl border-gray-200"
+          >
+            <Link href="/rooms">Chọn không gian</Link>
+          </Button>
         </div>
+      ) : (
+        <>
+          {/* Quick Stats */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+            <Card className="rounded-2xl border-none shadow-sm bg-gradient-to-br from-emerald-500/10 to-emerald-500/5">
+              <CardContent className="p-4 sm:p-5 flex flex-col justify-center">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 mb-2 sm:mb-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+                    <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
+                  </div>
+                  <p className="text-[10px] sm:text-xs font-black text-emerald-600/70 uppercase tracking-widest leading-none">Tổng cộng</p>
+                </div>
+                <div className="flex items-baseline gap-0.5 sm:gap-1 overflow-hidden">
+                  <p className="text-xl sm:text-2xl font-black text-emerald-900 truncate">
+                    {stats.totalSpent.toLocaleString('vi-VN')}
+                  </p>
+                  <span className="text-[10px] sm:text-xs font-bold text-emerald-600/60 uppercase">₫</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl border-none shadow-sm bg-gradient-to-br from-violet-500/10 to-violet-500/5">
+              <CardContent className="p-4 sm:p-5 flex flex-col justify-center">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 mb-2 sm:mb-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-violet-500/20 flex items-center justify-center shrink-0">
+                    <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-violet-600" />
+                  </div>
+                  <p className="text-[10px] sm:text-xs font-black text-violet-600/70 uppercase tracking-widest leading-tight sm:leading-none">Trình bình</p>
+                </div>
+                <div className="flex items-baseline gap-0.5 sm:gap-1 overflow-hidden">
+                  <p className="text-xl sm:text-2xl font-black text-violet-900 truncate">
+                    {stats.avgMonthly.toLocaleString('vi-VN')}
+                  </p>
+                  <span className="text-[10px] sm:text-xs font-bold text-violet-600/60 uppercase">₫</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl border-none shadow-sm bg-gradient-to-br from-amber-500/10 to-amber-500/5">
+              <CardContent className="p-4 sm:p-5 flex flex-col justify-center">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 mb-2 sm:mb-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+                  </div>
+                  <p className="text-[10px] sm:text-xs font-black text-amber-600/70 uppercase tracking-widest leading-none">Cao nhất</p>
+                </div>
+                <div className="flex items-baseline gap-0.5 sm:gap-1 overflow-hidden">
+                  <p className="text-xl sm:text-2xl font-black text-amber-900 truncate">
+                    {stats.peakMonth.toLocaleString('vi-VN')}
+                  </p>
+                  <span className="text-[10px] sm:text-xs font-bold text-amber-600/60 uppercase">₫</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Month List */}
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+            {loading && !isFirstLoadComplete ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-32 bg-white rounded-3xl border border-gray-100 animate-pulse" />
+                ))}
+              </div>
+            ) : months.length === 0 ? (
+              <div className="text-center py-20 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
+                  <CreditCard className="w-8 h-8 text-gray-300" />
+                </div>
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Chưa có giao dịch nào</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {months.map((monthData, index) => (
+                  <Link 
+                    key={`${monthData.year}-${monthData.month}`}
+                    href={`/bills/${monthData.year}/${monthData.month}`}
+                    className="group"
+                  >
+                    <Card className="rounded-3xl border-gray-100 shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 transition-all duration-300 overflow-hidden cursor-pointer active:scale-[0.99] tap-highlight relative">
+                      {/* Decorative background element for the first item */}
+                      {index === 0 && (
+                        <div className="absolute top-0 right-0 p-3">
+                          <div className="px-2 py-1 bg-primary/10 rounded-full flex items-center gap-1.5 border border-primary/20">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                            </span>
+                            <span className="text-[10px] font-black text-primary uppercase tracking-tight">Tháng hiện tại</span>
+                          </div>
+                        </div>
+                      )}
+
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between gap-6">
+                          <div className="flex items-center gap-5">
+                            <div className="w-14 h-14 bg-gray-50 rounded-2xl flex flex-col items-center justify-center group-hover:bg-primary/10 transition-colors duration-500 border border-gray-100 group-hover:border-primary/20">
+                              <span className="text-lg font-black text-gray-900 group-hover:text-primary transition-colors leading-none">{monthData.month}</span>
+                              <span className="text-[10px] font-black text-gray-400 uppercase group-hover:text-primary/70 transition-colors mt-0.5">{monthData.year}</span>
+                            </div>
+                            
+                            <div>
+                              <h3 className="font-black text-lg text-gray-900 group-hover:text-primary transition-colors leading-tight">
+                                {getMonthLabel(monthData.month)}
+                              </h3>
+                              <p className="text-xs font-bold text-gray-400 mt-0.5">
+                                {monthData.transactionCount} giao dịch ghi nhận
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover:text-primary/60 transition-colors">TỔNG CHI TIÊU</p>
+                            <div className="flex items-center justify-end gap-3">
+                              <p className="text-xl sm:text-2xl font-black text-gray-900 group-hover:text-primary transition-colors tracking-tighter">
+                                {monthData.totalAmount.toLocaleString('vi-VN')} <span className="text-xs font-bold text-gray-400">₫</span>
+                              </p>
+                              <div className="hidden sm:flex w-10 h-10 rounded-full bg-gray-50 items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                                <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                              </div>
+                            </div>
+                            <div className="sm:hidden flex items-center justify-end gap-1 text-[10px] font-black text-primary mt-1 opacity-0 group-hover:opacity-100 transition-opacity uppercase">
+                              Chi tiết <ArrowUpRight className="w-3 h-3" />
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

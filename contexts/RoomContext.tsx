@@ -121,6 +121,23 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     loadRooms();
   }, []);
 
+  // Show loading skeleton while rooms are loading
+  if (loading && rooms.length === 0) {
+    return (
+      <RoomContext.Provider
+        value={{
+          currentRoom: null,
+          rooms: [],
+          setCurrentRoom: () => {},
+          loading: true,
+          refreshRooms: async () => {},
+        }}
+      >
+        {children}
+      </RoomContext.Provider>
+    );
+  }
+
   return (
     <RoomContext.Provider
       value={{

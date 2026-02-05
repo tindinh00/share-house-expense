@@ -1,9 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { SplashScreen } from "@/components/splash-screen";
 
-const inter = Inter({ subsets: ["vietnamese", "latin"] });
+const jakarta = Plus_Jakarta_Sans({ 
+  subsets: ["vietnamese", "latin"],
+  display: 'swap',
+  variable: '--font-jakarta',
+});
 
 export const metadata: Metadata = {
   title: "Chi tiêu nhà chung",
@@ -39,8 +43,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
-      <body className={inter.className}>
+    <html lang="vi" className={jakarta.variable}>
+      <body className={jakarta.className}>
         <SplashScreen />
         {children}
       </body>
