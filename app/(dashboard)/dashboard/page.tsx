@@ -266,14 +266,6 @@ export default function DashboardPage() {
     <>
       {showLoginToast && <LoginToast username={username} />}
       
-      {/* Background stays constant to prevent flashing */}
-      <div className="absolute top-0 left-0 right-0 h-[50vh] bg-primary overflow-hidden -z-10 bg-gradient-to-br from-emerald-600 via-primary to-green-500">
-        <div className="absolute bottom-0 left-0 right-0 h-40 bg-background rounded-t-[48px] -mb-1"></div>
-        {/* Decorative elements */}
-        <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-[20%] left-[-5%] w-48 h-48 bg-white/5 rounded-full blur-2xl delay-700" />
-      </div>
-      
       <div className="relative space-y-6 pb-24 md:pb-8 -mt-8 md:-mt-12 lg:-mt-16">
         {/* Premium Header Section */}
         <div className="pt-10 pb-6 px-1 animate-in fade-in slide-in-from-top-6 duration-1000">

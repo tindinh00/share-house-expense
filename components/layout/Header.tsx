@@ -76,7 +76,10 @@ export default function Header({ user, profile, onMenuClick, isSidebarOpen = fal
   };
 
   return (
-    <header className="bg-primary/95 backdrop-blur-md shadow-lg sticky top-0 z-[100] safe-area-top border-b border-white/10">
+    <header 
+      className="bg-primary/95 backdrop-blur-md shadow-lg sticky top-0 z-[100] safe-area-top border-b border-white/10"
+      style={{ WebkitBackdropFilter: 'blur(12px)', backdropFilter: 'blur(12px)' }}
+    >
       <div className="px-4 md:px-6 lg:px-8 pt-safe">
         <div className="flex items-center justify-between h-16">
           <button

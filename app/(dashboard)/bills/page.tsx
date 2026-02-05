@@ -12,7 +12,9 @@ import {
   Wallet,
   ArrowRight,
   Sparkles,
-  ArrowUpRight
+  ArrowUpRight,
+  House,
+  Briefcase
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -143,16 +145,25 @@ export default function BillsPage() {
   }
 
   return (
-    <div className="space-y-6 pb-24 md:pb-8">
+    <div className="space-y-6 pb-24 md:pb-8 -mt-8 md:-mt-12 lg:-mt-16">
       {/* Header Area */}
-      <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
+      <div className="pt-10 pb-6 px-1 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+          <h1 className="text-3xl md:text-5xl font-black text-black drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)] tracking-tight leading-tight">
             Chi tiêu tháng
           </h1>
-          <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-wider">
-            {currentRoom?.name || 'Chưa chọn không gian'} • {months.length} tháng hoạt động
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            {currentRoom ? (
+               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/5 backdrop-blur-sm text-black/70">
+                 {currentRoom.type === 'PRIVATE' ? <Briefcase className="w-3.5 h-3.5" /> : <House className="w-3.5 h-3.5" />}
+                 <span className="text-xs font-black uppercase tracking-widest">{currentRoom.name}</span>
+                 <div className="h-1 w-1 rounded-full bg-black/20 mx-0.5" />
+                 <span className="text-xs font-black uppercase tracking-widest">{months.length} tháng hoạt động</span>
+               </div>
+            ) : roomLoading ? (
+               <div className="w-32 h-6 bg-gray-100 rounded animate-pulse" />
+            ) : null}
+          </div>
         </div>
       </div>
 

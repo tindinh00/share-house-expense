@@ -33,7 +33,15 @@ export default function DashboardShell({ user, profile, children }: DashboardShe
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-background to-background">
+    <div className="min-h-screen flex flex-col relative">
+      {/* Premium background applied globally */}
+      <div className="absolute top-0 left-0 right-0 h-[50vh] bg-primary overflow-hidden -z-10 bg-gradient-to-br from-emerald-600 via-primary to-green-500">
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-background rounded-t-[48px] -mb-1"></div>
+        {/* Decorative elements */}
+        <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-[20%] left-[-5%] w-48 h-48 bg-white/5 rounded-full blur-2xl delay-700" />
+      </div>
+
       <Header 
         user={user} 
         profile={profile}

@@ -533,18 +533,18 @@ export default function ReportsPage() {
   const showSkeletons = useMemo(() => loading && !isFirstLoadComplete, [loading, isFirstLoadComplete]);
 
   return (
-    <div className="space-y-6 pb-24 md:pb-8">
+    <div className="space-y-6 pb-24 md:pb-8 -mt-8 md:-mt-12 lg:-mt-16">
       {/* Header Area */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between animate-in fade-in slide-in-from-top-4 duration-700">
+      <div className="pt-10 pb-6 px-1 flex flex-col gap-4 md:flex-row md:items-center md:justify-between animate-in fade-in slide-in-from-top-4 duration-700">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+          <h1 className="text-3xl md:text-5xl font-black text-black drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)] tracking-tight leading-tight">
             Báo cáo chi tiêu
           </h1>
           <div className="flex items-center gap-2 mt-1">
             {currentRoom ? (
-               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">
+               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/5 backdrop-blur-sm text-black/70">
                  {currentRoom.type === 'PRIVATE' ? <Briefcase className="w-3.5 h-3.5" /> : <House className="w-3.5 h-3.5" />}
-                 <span className="text-xs font-bold uppercase tracking-wider">{currentRoom.name}</span>
+                 <span className="text-xs font-black uppercase tracking-widest">{currentRoom.name}</span>
                </div>
             ) : roomLoading ? (
                <div className="w-32 h-6 bg-gray-100 rounded animate-pulse" />
