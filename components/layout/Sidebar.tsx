@@ -31,7 +31,8 @@ import {
   Settings,
   Plus,
   Briefcase,
-  Layers
+  Layers,
+  ArrowRightLeft
 } from 'lucide-react';
 
 const navigation = [
@@ -39,6 +40,7 @@ const navigation = [
   { name: 'Giao dịch', href: '/transactions', icon: History },
   { name: 'Hóa đơn tháng', href: '/bills', icon: Calendar },
   { name: 'Báo cáo', href: '/reports', icon: BarChart3 },
+  { name: 'Thanh toán', href: '/settlements', icon: ArrowRightLeft },
   { name: 'Không gian', href: '/rooms', icon: Layers },
   { name: 'Hộ gia đình', href: '/households', icon: Users },
   { name: 'Cài đặt', href: '/settings', icon: Settings },

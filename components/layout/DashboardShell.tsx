@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import Header from './Header';
 import Sidebar from './Sidebar';
@@ -15,14 +15,19 @@ interface DashboardShellProps {
 }
 
 export default function DashboardShell({ user, profile, children }: DashboardShellProps) {
-  // Initialize sidebar state based on screen size and localStorage
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    if (typeof window === 'undefined') return false;
+  // Initialize sidebar state to false to match server-side rendering
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Sync state with localStorage and screen size on mount
+  useEffect(() => {
     const isMobile = window.innerWidth < 768;
-    if (isMobile) return false;
+    if (isMobile) {
+      setIsSidebarOpen(false);
+      return;
+    }
     const saved = localStorage.getItem('sidebarOpen');
-    return saved === 'true';
-  });
+    setIsSidebarOpen(saved === 'true');
+  }, []);
 
   // Save sidebar state to localStorage whenever it changes
   const toggleSidebar = (newState: boolean) => {

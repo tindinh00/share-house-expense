@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useRoom } from '@/contexts/RoomContext';
 import Link from 'next/link';
-import { InvitationsDropdown } from '@/components/InvitationsDropdown';
 import { motion } from 'framer-motion';
 import { 
   Home, 
@@ -17,6 +16,7 @@ import {
   Check,
   House
 } from 'lucide-react';
+import { NotificationsDropdown } from '@/components/NotificationsDropdown';
 
 const Path = (props: React.ComponentPropsWithoutRef<typeof motion.path>) => (
   <motion.path
@@ -200,7 +200,9 @@ export default function Header({ user, profile, onMenuClick, isSidebarOpen = fal
             </div>
           </div>
 
-          <InvitationsDropdown />
+          <div className="flex items-center gap-1 sm:gap-2">
+            <NotificationsDropdown />
+          </div>
 
           <div className="relative">
             <button

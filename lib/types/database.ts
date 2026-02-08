@@ -197,6 +197,88 @@ export interface Database {
           is_settled?: boolean
         }
       }
+      settlements: {
+        Row: {
+          id: string
+          room_id: string
+          from_household_id: string
+          to_household_id: string
+          transaction_ids: string[]
+          amount: number
+          status: 'pending' | 'confirmed' | 'rejected'
+          requested_by: string
+          requested_at: string
+          confirmed_by: string | null
+          confirmed_at: string | null
+          rejected_reason: string | null
+          note: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          room_id: string
+          from_household_id: string
+          to_household_id: string
+          transaction_ids: string[]
+          amount: number
+          status?: 'pending' | 'confirmed' | 'rejected'
+          requested_by: string
+          requested_at?: string
+          confirmed_by?: string | null
+          confirmed_at?: string | null
+          rejected_reason?: string | null
+          note?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          room_id?: string
+          from_household_id?: string
+          to_household_id?: string
+          transaction_ids?: string[]
+          amount?: number
+          status?: 'pending' | 'confirmed' | 'rejected'
+          requested_by?: string
+          requested_at?: string
+          confirmed_by?: string | null
+          confirmed_at?: string | null
+          rejected_reason?: string | null
+          note?: string | null
+          created_at?: string
+        }
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          message: string
+          type: 'info' | 'success' | 'warning' | 'error' | 'settlement'
+          link: string | null
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          message: string
+          type: 'info' | 'success' | 'warning' | 'error' | 'settlement'
+          link?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          message?: string
+          type?: 'info' | 'success' | 'warning' | 'error' | 'settlement'
+          link?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+      }
     }
   }
 }

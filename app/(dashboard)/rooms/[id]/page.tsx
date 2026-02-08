@@ -750,7 +750,7 @@ export default function RoomDetailPage() {
                           <SelectTrigger>
                             <SelectValue placeholder="-- Chọn hộ --" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="z-[99999]">
                             {userHouseholds.map((h) => (
                               <SelectItem key={h.id} value={h.id}>
                                 <span className="flex items-center gap-2">

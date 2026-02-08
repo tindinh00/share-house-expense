@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import {
   PieChart,
   Pie,
@@ -42,7 +43,9 @@ import {
   FileText,
   TrendingUp,
   CreditCard,
-  ArrowRightLeft
+  ArrowRightLeft,
+  XCircle,
+  CheckCircle2
 } from 'lucide-react';
 
 interface CategorySummary {
@@ -137,6 +140,8 @@ export default function ReportsPage() {
   const supabase = createClient();
   const { currentRoom, loading: roomLoading } = useRoom();
   
+  const [isDateFilterActive, setIsDateFilterActive] = useState(false);
+  const [includeSettled, setIncludeSettled] = useState(false);
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     to: new Date(),
@@ -228,7 +233,7 @@ export default function ReportsPage() {
 
   const loadTransactionDetails = useCallback(async () => {
     if (!currentRoom) return;
-    const { data, error } = await supabase
+    let query = supabase
       .from('transactions')
       .select(`
         id,
@@ -239,14 +244,24 @@ export default function ReportsPage() {
         paid_by,
         created_by,
         created_at,
+        is_settled,
         categories:category_id (name, icon, color),
         profiles:paid_by (username)
       `)
       .eq('room_id', currentRoom.id)
-      .gte('date', format(dateRange.from, 'yyyy-MM-dd'))
-      .lte('date', format(dateRange.to, 'yyyy-MM-dd'))
-      .eq('is_deleted', false)
-      .order('date', { ascending: false });
+      .eq('is_deleted', false);
+
+    if (isDateFilterActive) {
+      query = query
+        .gte('date', format(dateRange.from, 'yyyy-MM-dd'))
+        .lte('date', format(dateRange.to, 'yyyy-MM-dd'));
+    }
+
+    if (!includeSettled) {
+      query = query.eq('is_settled', false);
+    }
+
+    const { data, error } = await query.order('date', { ascending: false });
 
     if (error) throw error;
 
@@ -271,11 +286,11 @@ export default function ReportsPage() {
 
     setTransactions(details);
     setFilteredTransactions(details);
-  }, [currentRoom, dateRange, supabase]);
+  }, [currentRoom, dateRange, isDateFilterActive, includeSettled, supabase]);
 
   const loadCategorySummary = useCallback(async () => {
     if (!currentRoom) return;
-    const { data, error } = await supabase
+    let query = supabase
       .from('transactions')
       .select(`
         amount,
@@ -283,9 +298,19 @@ export default function ReportsPage() {
         categories:category_id (name, icon, color)
       `)
       .eq('room_id', currentRoom.id)
-      .gte('date', format(dateRange.from, 'yyyy-MM-dd'))
-      .lte('date', format(dateRange.to, 'yyyy-MM-dd'))
       .eq('is_deleted', false);
+
+    if (isDateFilterActive) {
+      query = query
+        .gte('date', format(dateRange.from, 'yyyy-MM-dd'))
+        .lte('date', format(dateRange.to, 'yyyy-MM-dd'));
+    }
+
+    if (!includeSettled) {
+      query = query.eq('is_settled', false);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
@@ -312,20 +337,30 @@ export default function ReportsPage() {
     const total = summary.reduce((sum, cat) => sum + cat.total, 0);
     setTotalExpense(total);
     setCategorySummary(summary);
-  }, [currentRoom, dateRange, supabase]);
+  }, [currentRoom, dateRange, isDateFilterActive, includeSettled, supabase]);
 
   const loadUserSummary = useCallback(async () => {
     if (!currentRoom) return;
-    const { data: transData, error } = await supabase
+    let query = supabase
       .from('transactions')
       .select(`
         amount,
         paid_by
       `)
       .eq('room_id', currentRoom.id)
-      .gte('date', format(dateRange.from, 'yyyy-MM-dd'))
-      .lte('date', format(dateRange.to, 'yyyy-MM-dd'))
       .eq('is_deleted', false);
+
+    if (isDateFilterActive) {
+      query = query
+        .gte('date', format(dateRange.from, 'yyyy-MM-dd'))
+        .lte('date', format(dateRange.to, 'yyyy-MM-dd'));
+    }
+
+    if (!includeSettled) {
+      query = query.eq('is_settled', false);
+    }
+
+    const { data: transData, error } = await query;
 
     if (error) throw error;
 
@@ -373,11 +408,11 @@ export default function ReportsPage() {
 
     summary.sort((a, b) => b.balance - a.balance);
     calculateSettlements(summary);
-  }, [currentRoom, dateRange, supabase, calculateSettlements]);
+  }, [currentRoom, dateRange, isDateFilterActive, includeSettled, supabase, calculateSettlements]);
 
   const loadHouseholdSummary = useCallback(async () => {
     if (!currentRoom) return;
-    const { data: transData, error } = await supabase
+    let query = supabase
       .from('transactions')
       .select(`
         id,
@@ -388,14 +423,24 @@ export default function ReportsPage() {
         paid_by,
         created_by,
         created_at,
+        is_settled,
         categories:category_id (name, icon, color),
         profiles:paid_by (username)
       `)
       .eq('room_id', currentRoom.id)
-      .gte('date', format(dateRange.from, 'yyyy-MM-dd'))
-      .lte('date', format(dateRange.to, 'yyyy-MM-dd'))
-      .eq('is_deleted', false)
-      .order('date', { ascending: false });
+      .eq('is_deleted', false);
+
+    if (isDateFilterActive) {
+      query = query
+        .gte('date', format(dateRange.from, 'yyyy-MM-dd'))
+        .lte('date', format(dateRange.to, 'yyyy-MM-dd'));
+    }
+
+    if (!includeSettled) {
+      query = query.eq('is_settled', false);
+    }
+
+    const  { data: transData, error } = await query.order('date', { ascending: false });
 
     if (error) throw error;
 
@@ -484,7 +529,7 @@ export default function ReportsPage() {
     spending.sort((a, b) => b.total - a.total);
     setHouseholdSpending(spending);
     calculateSettlementsForHouseholds(summary);
-  }, [currentRoom, dateRange, supabase, calculateSettlementsForHouseholds]);
+  }, [currentRoom, dateRange, isDateFilterActive, includeSettled, supabase, calculateSettlementsForHouseholds]);
 
   const loadReports = useCallback(async () => {
     if (!currentRoom) return;
@@ -512,7 +557,8 @@ export default function ReportsPage() {
     if (currentRoom) {
       loadReports();
     }
-  }, [currentRoom, dateRange, loadReports]);
+  }, [currentRoom, dateRange, isDateFilterActive, includeSettled, loadReports]);
+
 
   useEffect(() => {
     let filtered = [...transactions];
@@ -554,39 +600,97 @@ export default function ReportsPage() {
           </div>
         </div>
         
-        {/* Date Range Picker */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="h-11 px-4 rounded-xl shadow-sm border-gray-200 hover:border-primary/30 transition-all font-bold text-gray-700 gap-2 w-full md:w-auto tap-highlight">
-              <CalendarIcon className="w-4 h-4 text-primary" />
-              <span>{format(dateRange.from, 'dd/MM/yyyy', { locale: vi })} - {format(dateRange.to, 'dd/MM/yyyy', { locale: vi })}</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 rounded-2xl overflow-hidden shadow-2xl border-none" align="end">
-            <div className="p-3 bg-white space-y-2">
-              <div>
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Từ ngày:</p>
-                <Calendar
-                  mode="single"
-                  selected={dateRange.from}
-                  onSelect={(date) => date && setDateRange({ ...dateRange, from: date })}
-                  locale={vi}
-                  className="rounded-xl border border-gray-100"
-                />
+        <div className="flex flex-col md:flex-row gap-3">
+          {/* Include Settled Toggle */}
+          <Button
+            variant="outline"
+            onClick={() => setIncludeSettled(!includeSettled)}
+            className={cn(
+              "h-11 px-4 rounded-xl shadow-sm border-gray-200 transition-all font-bold gap-2 w-full md:w-auto tap-highlight",
+              includeSettled 
+                ? "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20" 
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+            )}
+          >
+            <CheckCircle2 className={cn("w-4 h-4", includeSettled ? "text-primary" : "text-gray-400")} />
+            <span>{includeSettled ? "Ẩn đã thanh toán" : "Hiện đã thanh toán"}</span>
+          </Button>
+
+          {/* Date Range Picker */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={cn(
+                  "h-11 px-4 rounded-xl shadow-sm border-gray-200 hover:border-primary/30 transition-all font-bold gap-2 w-full md:w-auto tap-highlight",
+                  !isDateFilterActive ? "text-gray-500" : "text-primary border-primary/20 bg-primary/5"
+                )}
+              >
+                <CalendarIcon className={cn("w-4 h-4", isDateFilterActive ? "text-primary" : "text-gray-400")} />
+                <span>
+                  {isDateFilterActive 
+                    ? `${format(dateRange.from, 'dd/MM/yyyy', { locale: vi })} - ${format(dateRange.to, 'dd/MM/yyyy', { locale: vi })}`
+                    : "Toàn bộ thời gian"
+                  }
+                </span>
+                {isDateFilterActive && (
+                  <div 
+                    className="ml-1 p-0.5 rounded-full hover:bg-primary/10 text-primary/60 hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsDateFilterActive(false);
+                    }}
+                  >
+                    <XCircle className="w-4 h-4" />
+                  </div>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 rounded-2xl overflow-hidden shadow-2xl border-none" align="end">
+              <div className="p-3 bg-white space-y-2">
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-xs font-bold text-gray-500 hover:text-primary hover:bg-primary/5 mb-2"
+                  onClick={() => setIsDateFilterActive(false)}
+                >
+                  <ArrowRightLeft className="w-3.5 h-3.5 mr-2" />
+                  Xem toàn bộ thời gian
+                </Button>
+                
+                <div>
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Từ ngày:</p>
+                  <Calendar
+                    mode="single"
+                    selected={dateRange.from}
+                    onSelect={(date) => {
+                      if (date) {
+                        setDateRange({ ...dateRange, from: date });
+                        setIsDateFilterActive(true);
+                      }
+                    }}
+                    locale={vi}
+                    className="rounded-xl border border-gray-100"
+                  />
+                </div>
+                <div className="pt-2 border-t border-gray-50">
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Đến ngày:</p>
+                  <Calendar
+                    mode="single"
+                    selected={dateRange.to}
+                    onSelect={(date) => {
+                      if (date) {
+                        setDateRange({ ...dateRange, to: date });
+                        setIsDateFilterActive(true);
+                      }
+                    }}
+                    locale={vi}
+                    className="rounded-xl border border-gray-100"
+                  />
+                </div>
               </div>
-              <div className="pt-2 border-t border-gray-50">
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Đến ngày:</p>
-                <Calendar
-                  mode="single"
-                  selected={dateRange.to}
-                  onSelect={(date) => date && setDateRange({ ...dateRange, to: date })}
-                  locale={vi}
-                  className="rounded-xl border border-gray-100"
-                />
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
       {showSkeletons ? (
