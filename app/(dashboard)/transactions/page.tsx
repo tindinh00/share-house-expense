@@ -484,7 +484,7 @@ export default function TransactionsPage() {
                     }}
                   >
                     <CardContent className="p-0">
-                      <div className="flex items-center p-4 sm:p-5">
+                      <div className="flex items-center p-1 sm:p-2">
                         {/* Date badge */}
                         <div className="flex flex-col items-center justify-center min-w-[50px] sm:min-w-[60px] h-[50px] sm:h-[60px] bg-gray-50 rounded-2xl mr-4 sm:mr-6 group-hover:bg-primary/10 transition-colors duration-300 border border-gray-100 group-hover:border-primary/20">
                           <span className="text-lg sm:text-xl font-black text-gray-900 leading-none group-hover:text-primary transition-colors">{getDayOnly(t.date)}</span>
@@ -501,25 +501,26 @@ export default function TransactionsPage() {
 
                         {/* Info */}
                         <div className="flex-1 min-w-0 pr-2">
-                          <div className="flex items-center justify-between gap-3 mb-1">
-                            <h3 className="font-black text-sm uppercase tracking-tight text-gray-900 truncate group-hover:text-primary transition-colors">
-                              {t.categories.name}
-                            </h3>
-                            <span className="font-black text-sm sm:text-base tracking-tighter text-gray-900 group-hover:text-primary transition-colors shrink-0">
-                              {t.amount.toLocaleString('vi-VN')} <span className="text-[10px] font-bold text-gray-400">₫</span>
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between gap-2">
-                             <div className="flex items-center gap-1.5 min-w-0">
-                               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate max-w-[100px] sm:max-w-[none]">{t.profiles.username}</p>
-                               {t.note && (
-                                  <>
-                                    <span className="w-1 h-1 rounded-full bg-gray-300 shrink-0"></span>
-                                    <p className="text-[10px] font-medium text-gray-500 truncate italic line-clamp-1">{t.note}</p>
-                                  </>
-                               )}
-                             </div>
-                             <span className="text-[10px] font-bold text-gray-400 shrink-0 uppercase tracking-tighter leading-none ml-1">{formatDate(t.date)}</span>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex flex-col gap-0 min-w-0">
+                              <h3 className="font-black text-xs uppercase tracking-tight text-gray-900 truncate group-hover:text-primary transition-colors">
+                                {t.categories.name}
+                              </h3>
+                              <p className="text-[11px] font-bold text-gray-500 truncate">
+                                {t.profiles.username}
+                              </p>
+                              {t.note && (
+                                <p className="text-[11px] font-medium text-gray-400 truncate italic">
+                                  {t.note}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex flex-col items-end shrink-0">
+                              <span className="font-black text-base sm:text-lg tracking-tighter text-gray-900 group-hover:text-primary transition-colors">
+                                {t.amount.toLocaleString('vi-VN')} <span className="text-xs font-bold text-gray-400">₫</span>
+                              </span>
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter leading-none">{formatDate(t.date)}</span>
+                            </div>
                           </div>
                         </div>
 
